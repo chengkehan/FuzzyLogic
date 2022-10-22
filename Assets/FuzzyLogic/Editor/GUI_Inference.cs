@@ -13,6 +13,27 @@ namespace FuzzyLogicSystem.Editor
 
         private static FlsList<string> inputLabels = new FlsList<string>();
 
+        private class Highlights 
+        {
+            private Dictionary<Inference, GUIUtils.Highlight> _highlighes = new Dictionary<Inference, GUIUtils.Highlight>();
+
+            public GUIUtils.Highlight Get(Inference inference)
+            {
+                if (_highlighes.TryGetValue(inference, out GUIUtils.Highlight highlight) == false)
+                {
+                    highlight = new GUIUtils.Highlight();
+                    _highlighes.Add(inference, highlight);
+                }
+                return highlight;
+            }
+        }
+
+        private static Highlights outputHighlights = new Highlights();
+
+        private static Highlights leftSideOutputHighlights = new Highlights();
+
+        private static Highlights rightSideOutputHighlighes = new Highlights();
+
         public static void Draw(Inference inference)
         {
             EditorGUILayout.BeginHorizontal();
@@ -58,7 +79,7 @@ namespace FuzzyLogicSystem.Editor
 
         private static void DrawOutput(Inference inference)
         {
-            GUIUtils.BeginBox(GUILayout.MaxWidth(100));
+            GUIUtils.BeginBox(GUILayout.MaxWidth(150));
             {
                 DrawCenterAlignedLabel("Output");
 
@@ -106,26 +127,32 @@ namespace FuzzyLogicSystem.Editor
                     selectedIndex = EditorGUILayout.Popup(selectedIndex, inputLabels.ToArray());
                     inference.outputGUID = inputGuids[selectedIndex];
 
-                    DrawCenterAlignedLabel(inference.Output().ToString("f2"));
+                    string outputStr = inference.Output().ToString("f2");
+                    DrawCenterAlignedLabel(outputStr);
+                    outputHighlights.Get(inference).Draw(outputStr);
                 }
                 EditorGUILayout.EndHorizontal();
             }
             GUIUtils.EndBox();
+
+            GUIUtils.highlight.Draw2(inference.outputGUID);
         }
 
         private static void DrawOP(Inference inference)
         {
-            GUIUtils.BeginBox();
+            GUIUtils.BeginBox(GUILayout.Width(120));
             {
                 DrawCenterAlignedLabel("OP");
-                inference.op = (Inference.OP)EditorGUILayout.EnumPopup(inference.op, GUILayout.Width(60));
+                inference.op = (Inference.OP)EditorGUILayout.EnumPopup(inference.op);
             }
             GUIUtils.EndBox();
         }
 
         private static void DrawOneSideInput(Inference inference, bool leftSideOrRightSide)
         {
-            DrawOneSideInput(inference,
+            Highlights highlights = leftSideOrRightSide ? leftSideOutputHighlights : rightSideOutputHighlighes;
+
+            DrawOneSideInput(inference, highlights, 
                 (data) =>
                 {
                     if (leftSideOrRightSide)
@@ -144,7 +171,7 @@ namespace FuzzyLogicSystem.Editor
             );
         }
 
-        private static void DrawOneSideInput(Inference inference, Action<string> set_oneSideInputGUID, Func<string> get_oneSideInputGUID)
+        private static void DrawOneSideInput(Inference inference, Highlights highlights, Action<string> set_oneSideInputGUID, Func<string> get_oneSideInputGUID)
         {
             inputGuids.Clear();
             inputLabels.Clear();
@@ -211,7 +238,9 @@ namespace FuzzyLogicSystem.Editor
                             }
                             else
                             {
-                                DrawCenterAlignedLabel(output.ToString("f2"), GUILayout.MaxWidth(80));
+                                var outputStr = output.ToString("f2");
+                                DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
+                                highlights.Get(inference).Draw(outputStr);
                             }
                         }
                     }
@@ -270,7 +299,9 @@ namespace FuzzyLogicSystem.Editor
                                 {
                                     outputValue = intersectionValues[index].y;
                                 }
-                                DrawCenterAlignedLabel(outputValue.ToString("f2"), GUILayout.MaxWidth(80));
+                                var outputStr = outputValue.ToString("f2");
+                                DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
+                                highlights.Get(inference).Draw(outputStr);
                             }
                         }
                         catch(ArgumentException)
@@ -286,6 +317,8 @@ namespace FuzzyLogicSystem.Editor
                 EditorGUILayout.EndHorizontal();
             }
             GUIUtils.EndBox();
+
+            GUIUtils.highlight.Draw2(get_oneSideInputGUID());
         }
 
         private static void DrawCenterAlignedLabel(string label, params GUILayoutOption[] options)

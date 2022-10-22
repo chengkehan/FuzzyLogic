@@ -460,82 +460,88 @@ namespace FuzzyLogicSystem.Editor
                         for (int i = 0; i < fuzzification.NumberTrapezoids(); i++)
                         {
                             var trapezoid = fuzzification.GetTrapezoid(i);
-                            GUILayout.BeginHorizontal();
-                            {
-                                GUILayout.Space(5);
-                                trapezoid.name = GUILayout.TextField(trapezoid.name, GUILayout.Width(70));
-
-                                float peakPointLeftValue = trapezoid.peakPointLeftValue;
-                                float peakPointRightValue = trapezoid.peakPointRightValue;
-
-                                peakPointLeftValue = EditorGUILayout.FloatField(peakPointLeftValue, GUILayout.Width(30));
-                                peakPointRightValue = EditorGUILayout.FloatField(peakPointRightValue, GUILayout.Width(30));
-
-                                GUILayout.Space(5);
-
-                                EditorGUILayout.MinMaxSlider(ref peakPointLeftValue, ref peakPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue());
-
-                                trapezoid.peakPointLeftValue = peakPointLeftValue;
-                                trapezoid.peakPointRightValue = peakPointRightValue;
-                                trapezoid.UpdateFootPointValue();
-
-                                GUILayout.Space(5);
-                                trapezoid.color = EditorGUILayout.ColorField(trapezoid.color, GUILayout.Width(40));
-                                if (fuzzification.IsLeftShoulder(trapezoid) == false && fuzzification.IsRightShoulder(trapezoid) == false)
-                                {
-                                    if (GUILayout.Button("-", GUILayout.Width(20)))
-                                    {
-                                        fuzzification.RemoveTrapezoid(i);
-                                        break;
-                                    }
-                                }
-                                else
-                                {
-                                    GUI.enabled = false;
-                                    GUILayout.Button(string.Empty, GUILayout.Width(20));
-                                    GUI.enabled = true;
-                                }
-                            }
-                            GUILayout.EndHorizontal();
-
-                            if (IsDefuzzification())
+                            GUILayout.BeginVertical();
                             {
                                 GUILayout.BeginHorizontal();
                                 {
                                     GUILayout.Space(5);
+                                    trapezoid.name = GUILayout.TextField(trapezoid.name, GUILayout.Width(70));
 
-                                    // set alpha to 0 to make gui invisible to keep layout aligned with previous line
-                                    GUI.color = new Color(1, 1, 1, 0);
-                                    GUILayout.TextField(string.Empty, GUILayout.Width(70));
-                                    GUI.color = Color.white;
+                                    float peakPointLeftValue = trapezoid.peakPointLeftValue;
+                                    float peakPointRightValue = trapezoid.peakPointRightValue;
 
-                                    float footPointLeftValue = trapezoid.footPointLeftValue;
-                                    float footPointRightValue = trapezoid.footPointRightValue;
-
-                                    footPointLeftValue = EditorGUILayout.FloatField(footPointLeftValue, GUILayout.Width(30));
-                                    footPointRightValue = EditorGUILayout.FloatField(footPointRightValue, GUILayout.Width(30));
+                                    peakPointLeftValue = EditorGUILayout.FloatField(peakPointLeftValue, GUILayout.Width(30));
+                                    peakPointRightValue = EditorGUILayout.FloatField(peakPointRightValue, GUILayout.Width(30));
 
                                     GUILayout.Space(5);
 
-                                    EditorGUILayout.MinMaxSlider(ref footPointLeftValue, ref footPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue());
+                                    EditorGUILayout.MinMaxSlider(ref peakPointLeftValue, ref peakPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue());
 
-                                    trapezoid.footPointLeftValue = footPointLeftValue;
-                                    trapezoid.footPointRightValue = footPointRightValue;
+                                    trapezoid.peakPointLeftValue = peakPointLeftValue;
+                                    trapezoid.peakPointRightValue = peakPointRightValue;
+                                    trapezoid.UpdateFootPointValue();
 
                                     GUILayout.Space(5);
-
-                                    GUI.color = new Color(1, 1, 1, 0);
-                                    EditorGUILayout.ColorField(Color.white, GUILayout.Width(40));
-                                    GUI.color = Color.white;
-
-                                    GUI.enabled = false;
-                                    GUI.color = new Color(1, 1, 1, 0);
-                                    GUILayout.Button(string.Empty, GUILayout.Width(20));
-                                    GUI.color = Color.white;
-                                    GUI.enabled = true;
+                                    trapezoid.color = EditorGUILayout.ColorField(trapezoid.color, GUILayout.Width(40));
+                                    if (fuzzification.IsLeftShoulder(trapezoid) == false && fuzzification.IsRightShoulder(trapezoid) == false)
+                                    {
+                                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                                        {
+                                            fuzzification.RemoveTrapezoid(i);
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        GUI.enabled = false;
+                                        GUILayout.Button(string.Empty, GUILayout.Width(20));
+                                        GUI.enabled = true;
+                                    }
                                 }
                                 GUILayout.EndHorizontal();
+
+                                if (IsDefuzzification())
+                                {
+                                    GUILayout.BeginHorizontal();
+                                    {
+                                        GUILayout.Space(5);
+
+                                        // set alpha to 0 to make gui invisible to keep layout aligned with previous line
+                                        GUI.color = new Color(1, 1, 1, 0);
+                                        GUILayout.TextField(string.Empty, GUILayout.Width(70));
+                                        GUI.color = Color.white;
+
+                                        float footPointLeftValue = trapezoid.footPointLeftValue;
+                                        float footPointRightValue = trapezoid.footPointRightValue;
+
+                                        footPointLeftValue = EditorGUILayout.FloatField(footPointLeftValue, GUILayout.Width(30));
+                                        footPointRightValue = EditorGUILayout.FloatField(footPointRightValue, GUILayout.Width(30));
+
+                                        GUILayout.Space(5);
+
+                                        EditorGUILayout.MinMaxSlider(ref footPointLeftValue, ref footPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue());
+
+                                        trapezoid.footPointLeftValue = footPointLeftValue;
+                                        trapezoid.footPointRightValue = footPointRightValue;
+
+                                        GUILayout.Space(5);
+
+                                        GUI.color = new Color(1, 1, 1, 0);
+                                        EditorGUILayout.ColorField(Color.white, GUILayout.Width(40));
+                                        GUI.color = Color.white;
+
+                                        GUI.enabled = false;
+                                        GUI.color = new Color(1, 1, 1, 0);
+                                        GUILayout.Button(string.Empty, GUILayout.Width(20));
+                                        GUI.color = Color.white;
+                                        GUI.enabled = true;
+                                    }
+                                    GUILayout.EndHorizontal();
+                                }
                             }
+                            GUILayout.EndVertical();
+
+                            GUIUtils.highlight.Draw2(trapezoid.guid);
                         }
                     }
                     GUILayout.EndScrollView();

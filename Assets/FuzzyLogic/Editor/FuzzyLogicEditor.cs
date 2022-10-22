@@ -76,7 +76,12 @@ namespace FuzzyLogicSystem.Editor
             }
             GUIUtils.EndBox();
 
-            GUI_FuzzyLogic.Draw(fuzzyLogic); 
+            GUI_FuzzyLogic.Draw(fuzzyLogic);
+
+            if (Event.current.control)
+            {
+                Repaint();
+            }
         }
     }
 }
