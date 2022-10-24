@@ -99,10 +99,9 @@ namespace FuzzyLogicSystem
                         var inference = GetInference(inferenceI);
                         if (inference.outputGUID == trapezoid.guid)
                         {
-                            var output = inference.Output();
-                            if (inference.OutputIsCycleReference(output) == false)
+                            if (inference.IsCycleReference() == false)
                             {
-                                trapezoid.height = output;
+                                trapezoid.height = inference.Output();
                             }
                         }
                     }

@@ -230,15 +230,15 @@ namespace FuzzyLogicSystem.Editor
                         // an inference is selected
                         else
                         {
-                            float output = inference.fuzzyLogic.GetInference(get_oneSideInputGUID()).Output();
-                            if (inference.OutputIsCycleReference(output))
+                            var oneSideInference = inference.fuzzyLogic.GetInference(get_oneSideInputGUID());
+                            if (inference.IsCycleReference() || oneSideInference.IsCycleReference())
                             {
                                 GUIUtils.ShowNotification("Cycle reference is not allowed");
                                 set_oneSideInputGUID(inputGuids[selectedIndex]);
                             }
                             else
                             {
-                                var outputStr = output.ToString("f2");
+                                var outputStr = oneSideInference.Output().ToString("f2");
                                 DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
                                 highlights.Get(inference).Draw(outputStr);
                             }
@@ -264,8 +264,8 @@ namespace FuzzyLogicSystem.Editor
                             if (o_fuzzification == null)
                             {
                                 set_oneSideInputGUID(inputGuids[newSelectedIndex]);
-                                float output = inference.fuzzyLogic.GetInference(inputGuids[newSelectedIndex]).Output();
-                                if (inference.OutputIsCycleReference(output))
+                                var oneSideInference = inference.fuzzyLogic.GetInference(inputGuids[newSelectedIndex]);
+                                if (inference.IsCycleReference() || oneSideInference.IsCycleReference())
                                 {
                                     GUIUtils.ShowNotification("Cycle reference is not allowed");
                                     set_oneSideInputGUID(inputGuids[selectedIndex]);
