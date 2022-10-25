@@ -8,6 +8,20 @@ namespace FuzzyLogicSystem
     [Serializable]
     public class Fuzzification
     {
+        // Editor only gui
+        private IGUI _gui = null;
+        public IGUI gui
+        {
+            set
+            {
+                _gui = value;
+            }
+            get
+            {
+                return _gui;
+            }
+        }
+
         // belong to this fuzzy logic
         private FuzzyLogic _fuzzyLogic = null;
         public FuzzyLogic fuzzyLogic

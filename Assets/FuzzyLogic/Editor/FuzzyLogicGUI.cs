@@ -1,31 +1,69 @@
-#if UNITY_EDITOR
-using System.Collections;
-using System.Collections.Generic;
+﻿#if UNITY_EDITOR
 using System;
-using System.IO;
 using UnityEngine;
 using UnityEditor;
 
 namespace FuzzyLogicSystem.Editor
 {
-    public class GUI_FuzzyLogic
+    public class FuzzyLogicGUI : IGUI
     {
-        private static Vector2 scrollFuzzifications = Vector2.zero;
+        private HighlightGUI _highlight = null;
+        public HighlightGUI highlight
+        {
+            get
+            {
+                if (_highlight == null)
+                {
+                    _highlight = new HighlightGUI();
+                }
+                return _highlight;
+            }
+        }
 
-        private static Vector2 scrollInferences = Vector2.zero;
+        private FuzzyLogicEditor _editorWindow = null;
+        public FuzzyLogicEditor editorWindow
+        {
+            set
+            {
+                _editorWindow = value;
+            }
+            get
+            {
+                return _editorWindow;
+            }
+        }
 
-        public static void Draw(FuzzyLogic fuzzyLogic)
+        private Vector2 scrollFuzzifications = Vector2.zero;
+
+        private Vector2 scrollInferences = Vector2.zero;
+
+        private FuzzyLogic fuzzyLogic = null;
+
+        public FuzzyLogicGUI(FuzzyLogic fuzzyLogic)
+        {
+            this.fuzzyLogic = fuzzyLogic;
+        }
+
+        public void ShowNotification(string msg)
+        {
+            if (editorWindow != null)
+            {
+                editorWindow.ShowNotification(new GUIContent(msg));
+            }
+        }
+
+        public void Draw()
         {
             EditorGUILayout.BeginVertical();
             {
-                scrollFuzzifications = EditorGUILayout.BeginScrollView(scrollFuzzifications, GUILayout.Height(GUI_Fuzzification.AREA_HEIGHT + 15));
+                scrollFuzzifications = EditorGUILayout.BeginScrollView(scrollFuzzifications, GUILayout.Height(FuzzificationGUI.AREA_HEIGHT + 15));
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
                         int numFuzzifications = fuzzyLogic.NumberFuzzifications();
                         for (int i = 0; i < numFuzzifications; i++)
                         {
-                            GUI_Fuzzification.Draw(fuzzyLogic.GetFuzzification(i));
+                            GUIUtils.Get(fuzzyLogic.GetFuzzification(i)).Draw();
 
                             // A fuzzification was deleted. Iterator changed, so break it.
                             if (numFuzzifications != fuzzyLogic.NumberFuzzifications())
@@ -40,7 +78,7 @@ namespace FuzzyLogicSystem.Editor
 
                 EditorGUILayout.BeginHorizontal();
                 {
-                    GUI_Defuzzification.Draw(fuzzyLogic.defuzzification);
+                    GUIUtils.Get(fuzzyLogic.defuzzification).Draw();
 
                     EditorGUILayout.BeginVertical();
                     {
@@ -49,7 +87,7 @@ namespace FuzzyLogicSystem.Editor
                             int numInferences = fuzzyLogic.NumberInferences();
                             for (int i = 0; i < numInferences; i++)
                             {
-                                GUI_Inference.Draw(fuzzyLogic.GetInference(i));
+                                GUIUtils.Get(fuzzyLogic.GetInference(i)).Draw();
 
                                 // An inference was deleted. Iterator changed, so break it.
                                 if (numInferences != fuzzyLogic.NumberInferences())
@@ -63,7 +101,7 @@ namespace FuzzyLogicSystem.Editor
                     EditorGUILayout.EndVertical();
                 }
                 EditorGUILayout.EndHorizontal();
-                
+
             }
             EditorGUILayout.EndVertical();
 

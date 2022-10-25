@@ -9,96 +9,41 @@ namespace FuzzyLogicSystem.Editor
 {
     public class GUIUtils
     {
-        public class Highlight
+        public static FuzzyLogicGUI Get(FuzzyLogic fuzzyLogic)
         {
-            private string data = string.Empty;
-
-            private Color color = Color.white;
-
-            private string _targetGuid = null;
-            public string targetGUID
+            if (fuzzyLogic.gui == null)
             {
-                private set
-                {
-                    _targetGuid = value;
-                }
-                get
-                {
-                    return _targetGuid;
-                }
+                fuzzyLogic.gui = new FuzzyLogicGUI(fuzzyLogic);
             }
-
-            public void Draw2(string guid)
-            {
-                if (Event.current.type == EventType.Repaint)
-                {
-                    Rect rect = GUILayoutUtility.GetLastRect();
-                    if (Event.current.control)
-                    {
-                        if (rect.Contains(Event.current.mousePosition))
-                        {
-                            targetGUID = guid;
-                            DrawInternal(rect);
-                        }
-                        else
-                        {
-                            if (targetGUID == guid)
-                            {
-                                DrawInternal(rect);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        targetGUID = null;
-                    }
-                }
-            }
-
-            public void Draw(string newData)
-            {
-                if (Event.current.type == EventType.Repaint)
-                {
-                    if (string.IsNullOrEmpty(data))
-                    {
-                        data = newData;
-                        color.a = 0;
-                    }
-                    else
-                    {
-                        if (data != newData)
-                        {
-                            data = newData;
-                            Rect rect = GUILayoutUtility.GetLastRect();
-                            DrawInternal(rect);
-                        }
-                    }
-                }
-            }
-
-            private void DrawInternal(Rect rect)
-            {
-                color.a = 0.3f;
-                GUI.color = color;
-                GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
-                GUI.color = Color.white;
-            }
+            return fuzzyLogic.gui as FuzzyLogicGUI;
         }
 
-        private static Highlight _highlight = null;
-        public static Highlight highlight
+        public static FuzzificationGUI Get(Fuzzification fuzzification)
         {
-            get
+            if (fuzzification.gui == null)
             {
-                if (_highlight == null)
-                {
-                    _highlight = new Highlight();
-                }
-                return _highlight;
+                fuzzification.gui = new FuzzificationGUI(fuzzification);
             }
+            return fuzzification.gui as FuzzificationGUI;
         }
 
-        public static FuzzyLogicEditor fuzzyLogicEditor = null;
+        public static DefuzzificationGUI Get(Defuzzification defuzzification)
+        {
+            if (defuzzification.gui == null)
+            {
+                defuzzification.gui = new DefuzzificationGUI(defuzzification);
+            }
+            return defuzzification.gui as DefuzzificationGUI;
+        }
+
+        public static InferenceGUI Get(Inference inference)
+        {
+            if (inference.gui == null)
+            {
+                inference.gui = new InferenceGUI(inference);
+            }
+            return inference.gui as InferenceGUI;
+        }
 
         private static Material _glMaterial = null;
         public static Material glMaterial
@@ -111,11 +56,6 @@ namespace FuzzyLogicSystem.Editor
                 }
                 return _glMaterial;
             }
-        }
-
-        public static void ShowNotification(string msg)
-        {
-            fuzzyLogicEditor.ShowNotification(new GUIContent(msg));
         }
         
         public static void BeginBox(params GUILayoutOption[] options)

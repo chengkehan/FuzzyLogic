@@ -69,6 +69,20 @@ namespace FuzzyLogicSystem
 
          */
 
+        // Editor only gui
+        private IGUI _gui = null;
+        public IGUI gui
+        {
+            set
+            {
+                _gui = value;
+            }
+            get
+            {
+                return _gui;
+            }
+        }
+
         private FlsList<Vector2> _bottomPoints = null;
         private FlsList<Vector2> bottomPoints
         {

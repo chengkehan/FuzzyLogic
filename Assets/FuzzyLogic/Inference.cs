@@ -16,6 +16,20 @@ namespace FuzzyLogicSystem
             _I = 4 // Use left side input and ignore right side input
         }
 
+        // Editor only gui
+        private IGUI _gui = null;
+        public IGUI gui
+        {
+            set
+            {
+                _gui = value;
+            }
+            get
+            {
+                return _gui;
+            }
+        }
+
         // Belong to which fuzzyLogic
         private FuzzyLogic _fuzzyLogic = null;
         public FuzzyLogic fuzzyLogic

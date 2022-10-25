@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using System;
@@ -7,34 +7,41 @@ using UnityEditor;
 
 namespace FuzzyLogicSystem.Editor
 {
-    public class GUI_Inference : MonoBehaviour
+    public class InferenceGUI : IGUI
     {
-        private static FlsList<string> inputGuids = new FlsList<string>();
-
-        private static FlsList<string> inputLabels = new FlsList<string>();
-
-        private class Highlights 
+        private class Highlights
         {
-            private Dictionary<Inference, GUIUtils.Highlight> _highlighes = new Dictionary<Inference, GUIUtils.Highlight>();
+            private Dictionary<Inference, HighlightGUI> _highlighes = new Dictionary<Inference, HighlightGUI>();
 
-            public GUIUtils.Highlight Get(Inference inference)
+            public HighlightGUI Get(Inference inference)
             {
-                if (_highlighes.TryGetValue(inference, out GUIUtils.Highlight highlight) == false)
+                if (_highlighes.TryGetValue(inference, out HighlightGUI highlight) == false)
                 {
-                    highlight = new GUIUtils.Highlight();
+                    highlight = new HighlightGUI();
                     _highlighes.Add(inference, highlight);
                 }
                 return highlight;
             }
         }
 
-        private static Highlights outputHighlights = new Highlights();
+        private Inference inference = null;
 
-        private static Highlights leftSideOutputHighlights = new Highlights();
+        private FlsList<string> inputGuids = new FlsList<string>();
 
-        private static Highlights rightSideOutputHighlighes = new Highlights();
+        private FlsList<string> inputLabels = new FlsList<string>();
 
-        public static void Draw(Inference inference)
+        private Highlights outputHighlights = new Highlights();
+
+        private Highlights leftSideOutputHighlights = new Highlights();
+
+        private Highlights rightSideOutputHighlighes = new Highlights();
+
+        public InferenceGUI(Inference inference)
+        {
+            this.inference = inference;
+        }
+
+        public void Draw()
         {
             EditorGUILayout.BeginHorizontal();
             {
@@ -51,7 +58,7 @@ namespace FuzzyLogicSystem.Editor
                     }
                 }
                 EditorGUILayout.EndVertical();
-                
+
 
                 if (inference.op == Inference.OP.And || inference.op == Inference.OP.Or || inference.op == Inference.OP._I)
                 {
@@ -77,7 +84,7 @@ namespace FuzzyLogicSystem.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private static void DrawOutput(Inference inference)
+        private void DrawOutput(Inference inference)
         {
             GUIUtils.BeginBox(GUILayout.MaxWidth(150));
             {
@@ -135,10 +142,10 @@ namespace FuzzyLogicSystem.Editor
             }
             GUIUtils.EndBox();
 
-            GUIUtils.highlight.Draw2(inference.outputGUID);
+            GUIUtils.Get(inference.fuzzyLogic).highlight.Draw2(inference.outputGUID);
         }
 
-        private static void DrawOP(Inference inference)
+        private void DrawOP(Inference inference)
         {
             GUIUtils.BeginBox(GUILayout.Width(120));
             {
@@ -148,11 +155,11 @@ namespace FuzzyLogicSystem.Editor
             GUIUtils.EndBox();
         }
 
-        private static void DrawOneSideInput(Inference inference, bool leftSideOrRightSide)
+        private void DrawOneSideInput(Inference inference, bool leftSideOrRightSide)
         {
             Highlights highlights = leftSideOrRightSide ? leftSideOutputHighlights : rightSideOutputHighlighes;
 
-            DrawOneSideInput(inference, highlights, 
+            DrawOneSideInput(inference, highlights,
                 (data) =>
                 {
                     if (leftSideOrRightSide)
@@ -171,7 +178,7 @@ namespace FuzzyLogicSystem.Editor
             );
         }
 
-        private static void DrawOneSideInput(Inference inference, Highlights highlights, Action<string> set_oneSideInputGUID, Func<string> get_oneSideInputGUID)
+        private void DrawOneSideInput(Inference inference, Highlights highlights, Action<string> set_oneSideInputGUID, Func<string> get_oneSideInputGUID)
         {
             inputGuids.Clear();
             inputLabels.Clear();
@@ -233,7 +240,7 @@ namespace FuzzyLogicSystem.Editor
                             var oneSideInference = inference.fuzzyLogic.GetInference(get_oneSideInputGUID());
                             if (inference.IsCycleReference() || oneSideInference.IsCycleReference())
                             {
-                                GUIUtils.ShowNotification("Cycle reference is not allowed");
+                                GUIUtils.Get(inference.fuzzyLogic).ShowNotification("Cycle reference is not allowed");
                                 set_oneSideInputGUID(inputGuids[selectedIndex]);
                             }
                             else
@@ -257,6 +264,7 @@ namespace FuzzyLogicSystem.Editor
                          */
                         try
                         {
+                            string oneSideGUID = get_oneSideInputGUID();
                             int selectedIndex = inputGuids.IndexOf(o_fuzzification.guid);
                             int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, inputLabels.ToArray());
                             o_fuzzification = inference.fuzzyLogic.GetFuzzification(inputGuids[newSelectedIndex]);
@@ -267,8 +275,8 @@ namespace FuzzyLogicSystem.Editor
                                 var oneSideInference = inference.fuzzyLogic.GetInference(inputGuids[newSelectedIndex]);
                                 if (inference.IsCycleReference() || oneSideInference.IsCycleReference())
                                 {
-                                    GUIUtils.ShowNotification("Cycle reference is not allowed");
-                                    set_oneSideInputGUID(inputGuids[selectedIndex]);
+                                    GUIUtils.Get(inference.fuzzyLogic).ShowNotification("Cycle reference is not allowed");
+                                    set_oneSideInputGUID(oneSideGUID);
                                 }
                             }
                             // a fuzzification is selected
@@ -304,7 +312,7 @@ namespace FuzzyLogicSystem.Editor
                                 highlights.Get(inference).Draw(outputStr);
                             }
                         }
-                        catch(ArgumentException)
+                        catch (ArgumentException)
                         {
                             // Do nothing
                         }
@@ -318,10 +326,10 @@ namespace FuzzyLogicSystem.Editor
             }
             GUIUtils.EndBox();
 
-            GUIUtils.highlight.Draw2(get_oneSideInputGUID());
+            GUIUtils.Get(inference.fuzzyLogic).highlight.Draw2(get_oneSideInputGUID());
         }
 
-        private static void DrawCenterAlignedLabel(string label, params GUILayoutOption[] options)
+        private void DrawCenterAlignedLabel(string label, params GUILayoutOption[] options)
         {
             EditorGUILayout.BeginHorizontal(options);
             {
@@ -332,7 +340,7 @@ namespace FuzzyLogicSystem.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private static bool NoOtherOutputsToThisDefuzzificationTrapezoid(Inference inference, string trapezoidGUID)
+        private bool NoOtherOutputsToThisDefuzzificationTrapezoid(Inference inference, string trapezoidGUID)
         {
             for (int inferenceI = 0; inferenceI < inference.fuzzyLogic.NumberInferences(); inferenceI++)
             {

@@ -1,22 +1,26 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System.Collections;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
 namespace FuzzyLogicSystem.Editor
 {
-    public class GUI_Fuzzification
+    public class FuzzificationGUI : IGUI
     {
+        private Fuzzification fuzzification = null;
+
         public const float AREA_HEIGHT = 400;
 
-        private static int fuzzificationIndex = 0;
+        private FlsList<Vector2> positionList = new FlsList<Vector2>();
 
-        private static FlsList<Vector2> positionList = new FlsList<Vector2>();
+        public FuzzificationGUI(Fuzzification fuzzification)
+        {
+            this.fuzzification = fuzzification;
+        }
 
-        private static Dictionary<Fuzzification, Vector2> _scrollFuzzificationTrapezoids = new Dictionary<Fuzzification, Vector2>();
-        public static Vector2 GetScrollPosition(Fuzzification fuzzification)
+        private Dictionary<Fuzzification, Vector2> _scrollFuzzificationTrapezoids = new Dictionary<Fuzzification, Vector2>();
+        public Vector2 GetScrollPosition(Fuzzification fuzzification)
         {
             if (_scrollFuzzificationTrapezoids.ContainsKey(fuzzification) == false)
             {
@@ -25,27 +29,18 @@ namespace FuzzyLogicSystem.Editor
             }
             return _scrollFuzzificationTrapezoids[fuzzification];
         }
-        public static void SetScrollPosition(Fuzzification fuzzification, Vector2 scollPosition)
+        public void SetScrollPosition(Fuzzification fuzzification, Vector2 scollPosition)
         {
             _scrollFuzzificationTrapezoids[fuzzification] = scollPosition;
         }
 
-        public static bool IsDefuzzification()
+        public bool IsDefuzzification()
         {
-            return fuzzificationIndex == -1;
+            return fuzzification is Defuzzification;
         }
 
-        public static void Draw(Fuzzification fuzzification)
+        public void Draw()
         {
-            try
-            {
-                fuzzificationIndex = fuzzification.fuzzyLogic.GetFuzzificationIndex(fuzzification);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                fuzzificationIndex = -1;
-            }
-
             float areaWidth = 350;
 
             if (IsDefuzzification())
@@ -541,7 +536,7 @@ namespace FuzzyLogicSystem.Editor
                             }
                             GUILayout.EndVertical();
 
-                            GUIUtils.highlight.Draw2(trapezoid.guid);
+                            GUIUtils.Get(trapezoid.fuzzyLogic).highlight.Draw2(trapezoid.guid);
                         }
                     }
                     GUILayout.EndScrollView();

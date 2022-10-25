@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Text;
 using UnityEngine;
 
 namespace FuzzyLogicSystem
@@ -8,6 +9,92 @@ namespace FuzzyLogicSystem
     [Serializable]
     public class FuzzyLogic
     {
+        private static byte[] _header = null;
+        public static byte[] header
+        {
+            get
+            {
+                if (_header == null)
+                {
+                    _header = new byte[] { 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90 };
+                }
+                return _header;
+            }
+        }
+
+        // Using weak-safe header checker rather than hash of SHA to speed up deserialization at runtime.
+        public static bool ValidateHeader(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length < header.Length)
+            {
+                return false;
+            }
+            else
+            {
+                for (int i = 0; i < header.Length; i++)
+                {
+                    if (header[i] != bytes[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
+        public static byte[] Serialize(FuzzyLogic fuzzyLogic)
+        {
+            if (fuzzyLogic == null)
+            {
+                return null;
+            }
+            else
+            {
+                string json = JsonUtility.ToJson(fuzzyLogic, true);
+                byte[] data = Encoding.Default.GetBytes(json);
+                byte[] bytes = new byte[header.Length + data.Length];
+                Buffer.BlockCopy(header, 0, bytes, 0, header.Length);
+                Buffer.BlockCopy(data, 0, bytes, header.Length, data.Length);
+                return bytes;
+            }
+        }
+
+        public static FuzzyLogic Deserialize(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length < header.Length)
+            {
+                return null;
+            }
+            else
+            {
+                if (ValidateHeader(bytes) == false)
+                {
+                    return null;
+                }
+
+                byte[] data = new byte[bytes.Length - header.Length];
+                Buffer.BlockCopy(bytes, header.Length, data, 0, data.Length);
+                string json = Encoding.Default.GetString(data);
+                var fuzzyLogic = JsonUtility.FromJson<FuzzyLogic>(json);
+                fuzzyLogic.Initialize();
+                return fuzzyLogic;
+            }
+        }
+
+        // Editor only gui
+        private IGUI _gui = null;
+        public IGUI gui
+        {
+            set
+            {
+                _gui = value;
+            }
+            get
+            {
+                return _gui;
+            }
+        }
+
         [SerializeField]
         private List<Fuzzification> fuzzifications = new List<Fuzzification>();
 
