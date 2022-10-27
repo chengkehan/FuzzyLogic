@@ -548,11 +548,6 @@ namespace FuzzyLogicSystem.Editor
             }
             GUILayout.EndVertical();
         }
-
-        private void asdfasdf(ref string asdf)
-        {
-
-        }
     }
 }
 #endif

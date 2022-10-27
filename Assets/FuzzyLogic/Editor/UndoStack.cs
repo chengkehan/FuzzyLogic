@@ -94,8 +94,6 @@ namespace FuzzyLogicSystem.Editor
         private class HistoryItem
         {
             public byte[] serializedData = null;
-
-            public byte[] targetSerializedData = null;
         }
     }
 }
