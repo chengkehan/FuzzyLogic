@@ -156,8 +156,7 @@ namespace FuzzyLogicSystem
             }
             if (defuzzification == null)
             {
-                defuzzification = new Defuzzification(Guid.NewGuid().ToString());
-                defuzzification.fuzzyLogic = this;
+                defuzzification = new Defuzzification(Guid.NewGuid().ToString(), this);
             }
 
             foreach (var fuzzification in fuzzifications)
@@ -311,8 +310,7 @@ namespace FuzzyLogicSystem
         public void AddFuzzification()
         {
             CheckInitialized();
-            var fuzzification = new Fuzzification(Guid.NewGuid().ToString());
-            fuzzification.fuzzyLogic = this;
+            var fuzzification = new Fuzzification(Guid.NewGuid().ToString(), this);
             fuzzifications.Add(fuzzification);
         }
 

@@ -47,14 +47,13 @@ namespace FuzzyLogicSystem.Editor
             {
                 EditorGUILayout.BeginVertical();
                 {
-                    inference.name = EditorGUILayout.TextField(inference.name, GUILayout.Width(80));
+                    GUIUtils.TextField(inference.fuzzyLogic, inference.name, t=>inference.name=t, GUILayout.Width(80));
 
                     if (GUILayout.Button("x", GUILayout.Width(20)))
                     {
-                        if (EditorUtility.DisplayDialog(string.Empty, "Are you sure to delete it?", "Yes", "Cancel"))
-                        {
-                            inference.fuzzyLogic.RemoveInference(inference);
-                        }
+                        GUIUtils.GUILoseFocus();
+                        GUIUtils.UndoStackRecord(inference.fuzzyLogic);
+                        inference.fuzzyLogic.RemoveInference(inference);
                     }
                 }
                 EditorGUILayout.EndVertical();
@@ -131,7 +130,7 @@ namespace FuzzyLogicSystem.Editor
                     }
 
                     int selectedIndex = inputGuids.IndexOf(inference.outputGUID);
-                    selectedIndex = EditorGUILayout.Popup(selectedIndex, inputLabels.ToArray());
+                    GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o => selectedIndex = o);
                     inference.outputGUID = inputGuids[selectedIndex];
 
                     string outputStr = inference.Output().ToString("f2");
@@ -150,7 +149,7 @@ namespace FuzzyLogicSystem.Editor
             GUIUtils.BeginBox(GUILayout.Width(120));
             {
                 DrawCenterAlignedLabel("OP");
-                inference.op = (Inference.OP)EditorGUILayout.EnumPopup(inference.op);
+                GUIUtils.EnumPopup(inference.fuzzyLogic, inference.op, o => inference.op = o);
             }
             GUIUtils.EndBox();
         }
@@ -227,7 +226,8 @@ namespace FuzzyLogicSystem.Editor
                     if (inference.fuzzyLogic.IsInferenceGUID(get_oneSideInputGUID()))
                     {
                         int selectedIndex = inputGuids.IndexOf(get_oneSideInputGUID());
-                        int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, inputLabels.ToArray());
+                        int newSelectedIndex = 0;
+                        GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>newSelectedIndex=o);
                         set_oneSideInputGUID(inputGuids[newSelectedIndex]);
                         // a fuzzification is selected
                         if (inference.fuzzyLogic.IsFuzzificationGUID(get_oneSideInputGUID()))
@@ -266,7 +266,9 @@ namespace FuzzyLogicSystem.Editor
                         {
                             string oneSideGUID = get_oneSideInputGUID();
                             int selectedIndex = inputGuids.IndexOf(o_fuzzification.guid);
-                            int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, inputLabels.ToArray());
+
+                            int newSelectedIndex = 0;
+                            GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>newSelectedIndex=o);
                             o_fuzzification = inference.fuzzyLogic.GetFuzzification(inputGuids[newSelectedIndex]);
                             // an inference is selected.
                             if (o_fuzzification == null)
@@ -295,7 +297,7 @@ namespace FuzzyLogicSystem.Editor
                                 selectedIndex = Mathf.Max(inputGuids.IndexOf(get_oneSideInputGUID()), 0);
                                 GUI.color = o_trapezoid.color;
                                 {
-                                    selectedIndex = EditorGUILayout.Popup(selectedIndex, inputLabels.ToArray());
+                                    GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>selectedIndex=o);
                                 }
                                 GUI.color = Color.white;
                                 set_oneSideInputGUID(inputGuids[selectedIndex]);

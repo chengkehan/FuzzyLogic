@@ -57,7 +57,160 @@ namespace FuzzyLogicSystem.Editor
                 return _glMaterial;
             }
         }
-        
+
+        public static void GUILoseFocus()
+        {
+            GUI.FocusControl(null);
+        }
+
+        public static void TextField(FuzzyLogic fuzzyLogic, string text, Action<string> setter, params GUILayoutOption[] options)
+        {
+            EditorGUI.BeginChangeCheck();
+            string newText = EditorGUILayout.DelayedTextField(text, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                GUIUtils.GUILoseFocus();
+                UndoStackRecord(fuzzyLogic);
+                setter(newText);
+            }
+        }
+
+        public static void UIntField(FuzzyLogic fuzzyLogic, int value, Action<int> setter, params GUILayoutOption[] options)
+        {
+            EditorGUI.BeginChangeCheck();
+            int newValue = Mathf.Abs(EditorGUILayout.DelayedIntField(value, options));
+            if (EditorGUI.EndChangeCheck())
+            {
+                GUIUtils.GUILoseFocus();
+                UndoStackRecord(fuzzyLogic);
+                setter(newValue);
+            }
+        }
+
+        public static void FloatField(FuzzyLogic fuzzyLogic, float value, Action<float> setter, params GUILayoutOption[] options)
+        {
+            EditorGUI.BeginChangeCheck();
+            float newValue = EditorGUILayout.DelayedFloatField(value, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                GUIUtils.GUILoseFocus();
+                UndoStackRecord(fuzzyLogic);
+                setter(newValue);
+            }
+        }
+
+        private static bool intSliderMouseDown = false;
+        public static void IntSlider(FuzzyLogic fuzzyLogic, int value, int leftValue, int rightValue, Action<int> setter, params GUILayoutOption[] options)
+        {
+            if (intSliderMouseDown == false)
+            {
+                intSliderMouseDown = Event.current.type == EventType.MouseDown;
+            }
+            
+            EditorGUI.BeginChangeCheck();
+            int newValue = EditorGUILayout.IntSlider(value, leftValue, rightValue, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (intSliderMouseDown)
+                {
+                    UndoStackRecord(fuzzyLogic);
+                }
+                
+                setter(newValue);
+
+                if (intSliderMouseDown)
+                {
+                    intSliderMouseDown = false;
+                }
+            }
+        }
+
+        private static bool sliderMouseDown = false;
+        public static void Slider(FuzzyLogic fuzzyLogic, float value, float leftValue, float rightValue, Action<float> setter, params GUILayoutOption[] options)
+        {
+            if (sliderMouseDown == false)
+            {
+                sliderMouseDown = Event.current.type == EventType.MouseDown;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            float newValue = EditorGUILayout.Slider(value, leftValue, rightValue, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (sliderMouseDown)
+                {
+                    UndoStackRecord(fuzzyLogic);
+                }
+
+                setter(newValue);
+
+                if (sliderMouseDown)
+                {
+                    sliderMouseDown = false;
+                }
+            }
+        }
+
+        private static bool minMaxSliderMouseDown = false;
+        public static void MinMaxSlider(FuzzyLogic fuzzyLogic, float minValue, float maxValue, float minLimit, float maxLimit, Action<float> setterMinValue, Action<float> setterMaxValue, params GUILayoutOption[] options)
+        {
+            if (minMaxSliderMouseDown == false)
+            {
+                minMaxSliderMouseDown = Event.current.type == EventType.MouseDown;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.MinMaxSlider(ref minValue, ref maxValue, minLimit, maxLimit, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (minMaxSliderMouseDown)
+                {
+                    UndoStackRecord(fuzzyLogic);
+                }
+
+                setterMinValue(minValue);
+                setterMaxValue(maxValue);
+
+                if (minMaxSliderMouseDown)
+                {
+                    minMaxSliderMouseDown = false;
+                }
+            }
+        }
+
+        public static void Popup(FuzzyLogic fuzzyLogic, int selectedIndex, string[] labels, Action<int> setter, params GUILayoutOption[] options)
+        {
+            EditorGUI.BeginChangeCheck();
+            int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, labels, options);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (newSelectedIndex != selectedIndex)
+                {
+                    UndoStackRecord(fuzzyLogic);
+                }
+            }
+            setter(newSelectedIndex);
+        }
+
+        public static void EnumPopup<T>(FuzzyLogic fuzzyLogic, T selected, Action<T> setter) where T : Enum
+        {
+            EditorGUI.BeginChangeCheck();
+            T newSelected = (T)EditorGUILayout.EnumPopup(selected);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (newSelected.Equals(selected) == false)
+                {
+                    UndoStackRecord(fuzzyLogic);
+                }
+            }
+            setter(newSelected);
+        }
+
+        public static void UndoStackRecord(FuzzyLogic fuzzyLogic)
+        {
+            GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Record(fuzzyLogic);
+        }
+
         public static void BeginBox(params GUILayoutOption[] options)
         {
             EditorGUILayout.BeginVertical(GUI.skin.GetStyle("Box"), options);

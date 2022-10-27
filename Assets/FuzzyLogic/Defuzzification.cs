@@ -164,8 +164,8 @@ namespace FuzzyLogicSystem
             }
         }
 
-        public Defuzzification(string guid) :
-            base(guid)
+        public Defuzzification(string guid, FuzzyLogic fuzzyLogic) :
+            base(guid, fuzzyLogic)
         {
             var leftShoulder = GetTrapezoid(0);
             leftShoulder.limitedValue = false;

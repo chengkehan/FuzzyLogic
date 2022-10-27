@@ -151,9 +151,10 @@ namespace FuzzyLogicSystem
             }
         }
 
-        public Fuzzification(string guid)
+        public Fuzzification(string guid, FuzzyLogic fuzzyLogic)
         {
             this.guid = guid;
+            this.fuzzyLogic = fuzzyLogic;
 
             var leftShoulder = new TrapezoidFuzzySet(Guid.NewGuid().ToString());
             leftShoulder.fuzzification = this;

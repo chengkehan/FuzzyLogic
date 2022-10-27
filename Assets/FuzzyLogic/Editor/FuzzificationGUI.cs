@@ -383,10 +383,9 @@ namespace FuzzyLogicSystem.Editor
                     {
                         if (GUI.Button(new Rect(glDisplay.width - 20, 0, 20, 20), "x"))
                         {
-                            if (EditorUtility.DisplayDialog(string.Empty, "Are you sure to delete it?", "Yes", "Cancel"))
-                            {
-                                fuzzification.fuzzyLogic.RemoveFuzzification(fuzzification);
-                            }
+                            GUIUtils.GUILoseFocus();
+                            GUIUtils.UndoStackRecord(fuzzification.fuzzyLogic);
+                            fuzzification.fuzzyLogic.RemoveFuzzification(fuzzification);
                         }
                     }
                 }
@@ -398,7 +397,7 @@ namespace FuzzyLogicSystem.Editor
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Name", GUILayout.Width(50));
-                        fuzzification.name = GUILayout.TextField(fuzzification.name);
+                        GUIUtils.TextField(fuzzification.fuzzyLogic, fuzzification.name, t=>fuzzification.name=t);
                     }
                     GUILayout.EndHorizontal();
 
@@ -407,14 +406,14 @@ namespace FuzzyLogicSystem.Editor
                         GUILayout.BeginHorizontal();
                         {
                             GUILayout.Label("Max Value");
-                            fuzzification.maxValue = Mathf.Abs(EditorGUILayout.IntField(fuzzification.maxValue, GUILayout.Width(50)));
+                            GUIUtils.UIntField(fuzzification.fuzzyLogic, fuzzification.maxValue, v=>fuzzification.maxValue=v, GUILayout.Width(50));
                         }
                         GUILayout.EndHorizontal();
                         GUILayout.Space(5);
                         GUILayout.BeginHorizontal();
                         {
                             GUILayout.Label("Division");
-                            fuzzification.division = EditorGUILayout.IntSlider(fuzzification.division, 1, 20);
+                            GUIUtils.IntSlider(fuzzification.fuzzyLogic, fuzzification.division, 1, 20, v=>fuzzification.division=v);
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -423,14 +422,14 @@ namespace FuzzyLogicSystem.Editor
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Value");
-                        fuzzification.value = EditorGUILayout.Slider(fuzzification.value, 0, fuzzification.maxValue);
+                        GUIUtils.Slider(fuzzification.fuzzyLogic, fuzzification.value, 0, fuzzification.maxValue, v=>fuzzification.value=v);
 
                         if (IsDefuzzification())
                         {
                             var defuzzification = fuzzification as Defuzzification;
                             GUILayout.Space(5);
                             GUILayout.Label("Subdivision");
-                            defuzzification.subdivision = EditorGUILayout.IntSlider(defuzzification.subdivision, 10, 100);
+                            GUIUtils.IntSlider(defuzzification.fuzzyLogic, defuzzification.subdivision, 10, 100, v=>defuzzification.subdivision=v);
                         }
                     }
                     GUILayout.EndHorizontal();
@@ -445,6 +444,8 @@ namespace FuzzyLogicSystem.Editor
                         GUILayout.FlexibleSpace();
                         if (GUILayout.Button("+", GUILayout.Width(20)))
                         {
+                            GUIUtils.GUILoseFocus();
+                            GUIUtils.UndoStackRecord(fuzzification.fuzzyLogic);
                             fuzzification.AddTrapezoid();
                         }
                     }
@@ -460,17 +461,17 @@ namespace FuzzyLogicSystem.Editor
                                 GUILayout.BeginHorizontal();
                                 {
                                     GUILayout.Space(5);
-                                    trapezoid.name = GUILayout.TextField(trapezoid.name, GUILayout.Width(70));
+                                    GUIUtils.TextField(trapezoid.fuzzyLogic, trapezoid.name, t=>trapezoid.name=t, GUILayout.Width(70));
 
                                     float peakPointLeftValue = trapezoid.peakPointLeftValue;
                                     float peakPointRightValue = trapezoid.peakPointRightValue;
 
-                                    peakPointLeftValue = EditorGUILayout.FloatField(peakPointLeftValue, GUILayout.Width(30));
-                                    peakPointRightValue = EditorGUILayout.FloatField(peakPointRightValue, GUILayout.Width(30));
+                                    GUIUtils.FloatField(trapezoid.fuzzyLogic, peakPointLeftValue, v=>peakPointLeftValue=v, GUILayout.Width(30));
+                                    GUIUtils.FloatField(trapezoid.fuzzyLogic, peakPointRightValue, v=>peakPointRightValue=v, GUILayout.Width(30));
 
                                     GUILayout.Space(5);
 
-                                    EditorGUILayout.MinMaxSlider(ref peakPointLeftValue, ref peakPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue());
+                                    GUIUtils.MinMaxSlider(trapezoid.fuzzyLogic, peakPointLeftValue, peakPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue(), v=>peakPointLeftValue=v, v=>peakPointRightValue=v);
 
                                     trapezoid.peakPointLeftValue = peakPointLeftValue;
                                     trapezoid.peakPointRightValue = peakPointRightValue;
@@ -482,6 +483,8 @@ namespace FuzzyLogicSystem.Editor
                                     {
                                         if (GUILayout.Button("-", GUILayout.Width(20)))
                                         {
+                                            GUIUtils.GUILoseFocus();
+                                            GUIUtils.UndoStackRecord(fuzzification.fuzzyLogic);
                                             fuzzification.RemoveTrapezoid(i);
                                             break;
                                         }
@@ -509,12 +512,12 @@ namespace FuzzyLogicSystem.Editor
                                         float footPointLeftValue = trapezoid.footPointLeftValue;
                                         float footPointRightValue = trapezoid.footPointRightValue;
 
-                                        footPointLeftValue = EditorGUILayout.FloatField(footPointLeftValue, GUILayout.Width(30));
-                                        footPointRightValue = EditorGUILayout.FloatField(footPointRightValue, GUILayout.Width(30));
+                                        GUIUtils.FloatField(fuzzification.fuzzyLogic, footPointLeftValue, v=>footPointLeftValue=v, GUILayout.Width(30));
+                                        GUIUtils.FloatField(fuzzification.fuzzyLogic, footPointRightValue, v=>footPointRightValue=v, GUILayout.Width(30));
 
                                         GUILayout.Space(5);
 
-                                        EditorGUILayout.MinMaxSlider(ref footPointLeftValue, ref footPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue());
+                                        GUIUtils.MinMaxSlider(fuzzification.fuzzyLogic, footPointLeftValue, footPointRightValue, fuzzification.MinValue(), fuzzification.MaxValue(), v=>footPointLeftValue=v, v=>footPointRightValue=v);
 
                                         trapezoid.footPointLeftValue = footPointLeftValue;
                                         trapezoid.footPointRightValue = footPointRightValue;
@@ -544,6 +547,11 @@ namespace FuzzyLogicSystem.Editor
                 GUIUtils.EndBox();
             }
             GUILayout.EndVertical();
+        }
+
+        private void asdfasdf(ref string asdf)
+        {
+
         }
     }
 }
