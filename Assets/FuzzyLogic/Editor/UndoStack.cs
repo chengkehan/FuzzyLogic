@@ -32,7 +32,7 @@ namespace FuzzyLogicSystem.Editor
 
                     pointerIndex--;
                     var historyItem = historyList[pointerIndex];
-                    fuzzyLogicEditor.fuzzyLogic = FuzzyLogic.Deserialize(historyItem.serializedData);
+                    fuzzyLogicEditor.fuzzyLogic = FuzzyLogic.Deserialize(historyItem.serializedData, fuzzyLogicEditor.fuzzyLogic);
                 }
             }
         }
@@ -49,7 +49,7 @@ namespace FuzzyLogicSystem.Editor
                     }
                     else
                     {
-                        fuzzyLogicEditor.fuzzyLogic = FuzzyLogic.Deserialize(tempTopHistoryItem.serializedData);
+                        fuzzyLogicEditor.fuzzyLogic = FuzzyLogic.Deserialize(tempTopHistoryItem.serializedData, fuzzyLogicEditor.fuzzyLogic);
                         tempTopHistoryItem = null;
                         pointerIndex = historyList.Count;
                     }
@@ -58,7 +58,7 @@ namespace FuzzyLogicSystem.Editor
                 {
                     pointerIndex++;
                     var historyItem = historyList[pointerIndex];
-                    fuzzyLogicEditor.fuzzyLogic = FuzzyLogic.Deserialize(historyItem.serializedData);
+                    fuzzyLogicEditor.fuzzyLogic = FuzzyLogic.Deserialize(historyItem.serializedData, fuzzyLogicEditor.fuzzyLogic);
                 }
             }
         }
@@ -66,6 +66,13 @@ namespace FuzzyLogicSystem.Editor
         public void Record(FuzzyLogic fuzzyLogic)
         {
             Record_Internal(fuzzyLogic);
+        }
+
+        public void Empty()
+        {
+            historyList.Clear();
+            pointerIndex = 0;
+            tempTopHistoryItem = null;
         }
 
         private void Record_Internal(FuzzyLogic fuzzyLogic)
@@ -88,6 +95,8 @@ namespace FuzzyLogicSystem.Editor
                 historyItem.serializedData = FuzzyLogic.Serialize(fuzzyLogic);
                 historyList.Add(historyItem);
                 pointerIndex = historyList.Count;
+
+                GUIUtils.Get(fuzzyLogic).isChanged = true;
             }
         }
 

@@ -221,6 +221,16 @@ namespace FuzzyLogicSystem.Editor
             EditorGUILayout.EndVertical();
         }
 
+        public static void BeginHBox(params GUILayoutOption[] options)
+        {
+            EditorGUILayout.BeginHorizontal(GUI.skin.GetStyle("Box"), options);
+        }
+
+        public static void EndHBox()
+        {
+            EditorGUILayout.EndHorizontal();
+        }
+
         public static void GLDrawShape(int mode, Action function)
         {
             GL.Begin(mode);

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
@@ -10,6 +11,12 @@ namespace FuzzyLogicSystem.Editor
 {
     public class FuzzyLogicEditor : EditorWindow
     {
+        public const string PERSISTENT_DATA_PATH = "Assets/FuzzyLogic/Data/";
+
+        public const string DEFAULT = "default.bytes";
+
+        public const string DEFAULT_GUID = "defaultGUID";
+
         [MenuItem("Window/Fuzzy Logic Editor")]
         private static void OpenFizzyLogicEditor()
         {
@@ -17,6 +24,27 @@ namespace FuzzyLogicSystem.Editor
             window.titleContent = new GUIContent("Fuzzy Logic");
             window.Show();
         }
+
+        #region All FuzzyLogicEditor Windows
+
+        private static List<FuzzyLogicEditor> allFuzzyLogicEditors = new List<FuzzyLogicEditor>();
+
+        private static void AddFuzzyLogicEditor(FuzzyLogicEditor fuzzyLogicEditor)
+        {
+            allFuzzyLogicEditors.Add(fuzzyLogicEditor);
+        }
+
+        private static void RemoveFuzzyLogicEditor(FuzzyLogicEditor fuzzyLogicEditor)
+        {
+            allFuzzyLogicEditors.Remove(fuzzyLogicEditor);
+        }
+
+        private static int NumberFuzzyLogicEditors()
+        {
+            return allFuzzyLogicEditors.Count;
+        }
+
+        #endregion
 
         private UndoStack _undoStack = new UndoStack();
         public UndoStack undoStack
@@ -27,17 +55,30 @@ namespace FuzzyLogicSystem.Editor
             }
         }
 
-        private FuzzyLogic _fuzzyLogic = null;
+        private string _fuzzyLogicGUID = null;
+        private string fuzzyLogicGUID
+        {
+            set
+            {
+                _fuzzyLogicGUID = value;
+            }
+            get
+            {
+                return _fuzzyLogicGUID;
+            }
+        }
+
         public FuzzyLogic fuzzyLogic
         {
             set
             {
-                _fuzzyLogic = value;
-                InitializeEditorWindow();
+                fuzzyLogicGUID = value.guid;
             }
             get
             {
-                return _fuzzyLogic;
+                var fuzzyLogic = FuzzyLogic.GetRegisteredFuzzyLogic(fuzzyLogicGUID);
+                GUIUtils.Get(fuzzyLogic).editorWindow = this;
+                return fuzzyLogic;
             }
         }
 
@@ -56,21 +97,22 @@ namespace FuzzyLogicSystem.Editor
 
         private void OnEnable()
         {
-            var guids = AssetDatabase.FindAssets("t:Script FuzzyLogicEditor");
-            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var dir = new FileInfo(path).Directory;
-            path = dir.FullName + "/default.bytes";
-            path = FileUtil.GetProjectRelativePath(path);
-            var bytes = File.ReadAllBytes(path);
+            RegisterAllFuzzyLogicsOnDisk();
 
-            fuzzyLogic = FuzzyLogic.Deserialize(bytes);
-            fuzzyLogic.Initialize();
-            InitializeEditorWindow();
+            fuzzyLogicGUID = DEFAULT_GUID;
+
+            AddFuzzyLogicEditor(this);
         }
 
         private void OnDisable()
-        {  
-           DeleteTempShortcutsProfile(); 
+        {
+            DeleteTempShortcutsProfile();
+            RemoveFuzzyLogicEditor(this);
+
+            if (NumberFuzzyLogicEditors() == 0)
+            {
+                FuzzyLogic.UnregisterAllFuzzyLogics();
+            }
         }
 
         private void OnGUI()
@@ -81,34 +123,31 @@ namespace FuzzyLogicSystem.Editor
             {
                 EditorGUILayout.BeginHorizontal();
                 {
-                    if (GUILayout.Button("Save", GUILayout.Width(80)))
+                    OnGUI_RefreshAllFuzzyLogics();
+                    OnGUI_AllFuzzyLogicsList();
+
+                    bool fuzzyLogicIsChanged = GUIUtils.Get(fuzzyLogic).isChanged;
+                    GUI.color = fuzzyLogicIsChanged ? Color.green : Color.white;
+                    bool saveButton = GUILayout.Button("Save" + (fuzzyLogicIsChanged ? "*" : string.Empty), GUILayout.Width(80));
+                    GUI.color = Color.white;
+                    if (saveButton)
                     {
-                        string savePath = EditorUtility.SaveFilePanel("Save", string.Empty, string.Empty, "bytes");
-                        if (string.IsNullOrEmpty(savePath) == false)
+                        ForEachFuzzyLogicsOnDisk((i_fuzzyLogic, filePath) =>
                         {
-                            GUIUtils.GUILoseFocus();
-                            byte[] bytes = FuzzyLogic.Serialize(fuzzyLogic);
-                            File.WriteAllBytes(savePath, bytes);
-                        }
-                    }
-                    if (GUILayout.Button("Load", GUILayout.Width(80)))
-                    {
-                        string loadPath = EditorUtility.OpenFilePanel(string.Empty, string.Empty, "bytes");
-                        if (string.IsNullOrEmpty(loadPath) == false)
-                        {
-                            GUIUtils.GUILoseFocus();
-                            byte[] bytes = File.ReadAllBytes(loadPath);
-                            if (FuzzyLogic.ValidateHeader(bytes))
+                            if (i_fuzzyLogic.guid == fuzzyLogic.guid)
                             {
-                                fuzzyLogic = FuzzyLogic.Deserialize(bytes);
-                                InitializeEditorWindow();
+                                File.WriteAllBytes(filePath, FuzzyLogic.Serialize(fuzzyLogic));
+                                GUIUtils.Get(fuzzyLogic).isChanged = false;
+                                GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Empty();
+                                return false;
                             }
                             else
                             {
-                                GUIUtils.Get(fuzzyLogic).ShowNotification("Invalid data");
+                                return true;
                             }
-                        }
+                        });
                     }
+                    
                     if (GUILayout.Button("Add Fuzzification", GUILayout.Width(120)))
                     {
                         GUIUtils.GUILoseFocus();
@@ -122,11 +161,26 @@ namespace FuzzyLogicSystem.Editor
                         fuzzyLogic.AddInference(); 
                     }
 
-                    GUIUtils.BeginBox(GUILayout.Width(100));
                     {
-                        fuzzyLogic.updatingOutput = GUILayout.Toggle(fuzzyLogic.updatingOutput, "Updating Output");
+                        GUILayout.Space(10);
+                        GUILayout.Label("|");
+                        GUILayout.Space(10);
+
+                        fuzzyLogic.evaluate = GUILayout.Toggle(fuzzyLogic.evaluate, "Evaluate");
+
+                        GUILayout.Space(10);
+                        GUILayout.Label("|");
+                        GUILayout.Space(10);
+
+                        GUILayout.BeginHorizontal(GUILayout.Width(150));
+                        {
+                            GUILayout.Label("Name");
+                            GUIUtils.TextField(fuzzyLogic, fuzzyLogic.name, o => fuzzyLogic.name = o);
+                        }
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.FlexibleSpace();
                     }
-                    GUIUtils.EndBox();
                 }
                 EditorGUILayout.EndHorizontal();
             }
@@ -137,13 +191,180 @@ namespace FuzzyLogicSystem.Editor
             Repaint();
         }
 
-        private void InitializeEditorWindow()
+        #region FuzzyLogic data stored on disk
+
+        private void RegisterAllFuzzyLogicsOnDisk()
         {
-            if (fuzzyLogic != null)
+            ForEachFuzzyLogicsOnDisk((fuzzyLogic, filePath) =>
             {
-                GUIUtils.Get(fuzzyLogic).editorWindow = this;
+                // Register it
+                if (FuzzyLogic.QueryFuzzyLogic(fuzzyLogic.guid, out var _) == false)
+                {
+                    FuzzyLogic.RegisterFuzzyLogic(fuzzyLogic);
+
+                    var popupMenuItemPath = filePath.Substring(PERSISTENT_DATA_PATH.Length);
+                    var separatorIndex = popupMenuItemPath.IndexOf("/");
+                    if (separatorIndex != -1)
+                    {
+                        GUIUtils.Get(fuzzyLogic).popupMenuItemPath = popupMenuItemPath.Substring(0, separatorIndex);
+                    }
+                    else
+                    {
+                        GUIUtils.Get(fuzzyLogic).popupMenuItemPath = string.Empty;
+                    }
+                }
+
+                return true;
+            });
+        }
+
+        private void ForEachFuzzyLogicsOnDisk(Func<FuzzyLogic, string/*filePath*/, bool/*go on iterating*/> action)
+        {
+            // Read all fuzzylogic files on disk
+            var allFiles = Directory.GetFiles(PERSISTENT_DATA_PATH, "*.bytes", SearchOption.AllDirectories);
+            foreach (var file in allFiles)
+            {
+                var bytes = File.ReadAllBytes(file);
+                if (FuzzyLogic.ValidateHeader(bytes))
+                {
+                    FuzzyLogic fuzzyLogic = FuzzyLogic.Deserialize(bytes, null);
+                    if (action != null)
+                    {
+                        if (action(fuzzyLogic, file) == false)
+                        {
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.Log("Invalid header, Parse fuzzyLogic data fail. " + file);
+                }
             }
         }
+
+        #endregion
+
+        #region EditorGUI of all fuzzyLogics list
+
+        private FlsList<string> allFuzzyLogicsNames = new FlsList<string>();
+
+        private FlsList<string> allFuzzyLogicsGUIDs = new FlsList<string>();
+
+        private GUIStyle _refreshButtonStyle;
+        private GUIStyle refreshButtonStyle
+        {
+            get
+            {
+                if (_refreshButtonStyle == null)
+                {
+                    _refreshButtonStyle = new GUIStyle();
+                    _refreshButtonStyle.normal.background = EditorGUIUtility.FindTexture("d_RotateTool On");
+                    _refreshButtonStyle.hover.background = EditorGUIUtility.FindTexture("d_RotateTool");
+                }
+                return _refreshButtonStyle;
+            }
+        }
+
+        private void OnGUI_RefreshAllFuzzyLogics()
+        {
+            if(GUILayout.Button(new GUIContent(string.Empty, "Reload all FuzzyLogics from disk.\nChanges not saved will be lost.\nIt's useful when you modify(rename, delete or move etc.) saved data in folders."), refreshButtonStyle, GUILayout.Width(18), GUILayout.Height(18)))
+            {
+                
+                bool doSave = true;
+                if (GUIUtils.Get(fuzzyLogic).isChanged)
+                {
+                    if (EditorUtility.DisplayDialog("Message", "Some changes are not saved, would you still like to reload?\nChanges not saved will be lost.", "Yes", "Cancel") == false)
+                    {
+                        doSave = false;
+                    }
+                }
+                if (doSave)
+                {
+                    for (int i = 0; i < FuzzyLogic.NumberRegisteredFuzzyLogics(); i++)
+                    {
+                        var fuzzyLogic = FuzzyLogic.GetRegisteredFuzzyLogic(i);
+                        if (GUIUtils.Get(fuzzyLogic).editorWindow && GUIUtils.Get(fuzzyLogic).editorWindow.undoStack != null)
+                        {
+                            GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Empty();
+                        }
+                    }
+                    FuzzyLogic.UnregisterAllFuzzyLogics();
+                    RegisterAllFuzzyLogicsOnDisk();
+                }
+            }
+            if (Event.current.type == EventType.Repaint)
+            {
+                Rect rect = GUILayoutUtility.GetLastRect();
+                if (rect.Contains(Event.current.mousePosition))
+                {
+                    GUIUtils.GUILoseFocus();
+                }
+            }
+        }
+
+        private void OnGUI_AllFuzzyLogicsList()
+        {
+            allFuzzyLogicsNames.Clear();
+            allFuzzyLogicsGUIDs.Clear();
+
+            for (int i = 0; i < FuzzyLogic.NumberRegisteredFuzzyLogics(); i++)
+            {
+                var fuzzyLogic = FuzzyLogic.GetRegisteredFuzzyLogic(i);
+                if (string.IsNullOrWhiteSpace(fuzzyLogic.name) == false)
+                {
+                    string popupMenuItemPath = GUIUtils.Get(fuzzyLogic).popupMenuItemPath;
+                    allFuzzyLogicsNames.Add(string.IsNullOrEmpty(popupMenuItemPath) ? fuzzyLogic.name : popupMenuItemPath + "/" + fuzzyLogic.name);
+                }
+                else
+                {
+                    allFuzzyLogicsNames.Add("Unnamed/" + i);
+                }
+                allFuzzyLogicsGUIDs.Add(fuzzyLogic.guid);
+            }
+
+            allFuzzyLogicsNames.Sort(
+                (a, b) =>
+                {
+                    return a.CompareTo(b);
+                },
+                allFuzzyLogicsGUIDs
+            );
+
+            int selectedIndex = Mathf.Max(allFuzzyLogicsGUIDs.IndexOf(fuzzyLogicGUID), 0);
+            int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, allFuzzyLogicsNames.ToArray());
+            if (selectedIndex != newSelectedIndex)
+            {
+                GUIUtils.GUILoseFocus();
+                if (GUIUtils.Get(fuzzyLogic).isChanged)
+                {
+                    if(EditorUtility.DisplayDialog("Message", "Some changes are not saved, would you still like to close it?\nChanges not saved will be lost.", "Yes", "Cancel"))
+                    {
+                        ForEachFuzzyLogicsOnDisk((i_fuzzyLogic, filePath)=>
+                        {
+                            if (fuzzyLogic.guid == i_fuzzyLogic.guid)
+                            { 
+                                GUIUtils.Get(fuzzyLogic).isChanged = false;
+                                GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Empty();
+                                FuzzyLogic.Deserialize(FuzzyLogic.Serialize(i_fuzzyLogic), fuzzyLogic);
+                                return false;
+                            }
+                            else
+                            {
+                                return true;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        newSelectedIndex = selectedIndex;
+                    }
+                }
+            }
+            fuzzyLogicGUID = allFuzzyLogicsGUIDs[newSelectedIndex];
+        }
+
+        #endregion
 
         private void OnFocus()
         {

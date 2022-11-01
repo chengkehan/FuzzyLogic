@@ -1,0 +1,144 @@
+´ÕÔ4Vxê{
+    "fuzzifications": [
+        {
+            "_division": 10,
+            "_maxValue": 100,
+            "_guid": "db7f7876-bdb1-41db-9ff3-8c0460d97ac0",
+            "_name": "",
+            "_value": 54.20000076293945,
+            "trapezoids": [
+                {
+                    "_guid": "581ccd38-23cd-46c1-a260-3aeee8174418",
+                    "_color": {
+                        "r": 1.0,
+                        "g": 0.0,
+                        "b": 0.0,
+                        "a": 1.0
+                    },
+                    "_name": "",
+                    "_peakPointLeftValue": 0.0,
+                    "_footPointLeftValue": 0.0,
+                    "_peakPointRightValue": 20.0,
+                    "_footPointRightValue": 80.0
+                },
+                {
+                    "_guid": "59b62df9-cece-43f4-8178-e8add09f6d27",
+                    "_color": {
+                        "r": 0.0,
+                        "g": 1.0,
+                        "b": 0.0,
+                        "a": 1.0
+                    },
+                    "_name": "",
+                    "_peakPointLeftValue": 80.0,
+                    "_footPointLeftValue": 20.0,
+                    "_peakPointRightValue": 100.0,
+                    "_footPointRightValue": 100.0
+                }
+            ]
+        },
+        {
+            "_division": 10,
+            "_maxValue": 100,
+            "_guid": "490e24af-25ff-4209-b9a6-a92ceb761c05",
+            "_name": "",
+            "_value": 37.0,
+            "trapezoids": [
+                {
+                    "_guid": "7a504c3d-5913-4ea6-8129-4097fad19fa1",
+                    "_color": {
+                        "r": 1.0,
+                        "g": 0.7902222275733948,
+                        "b": 0.0,
+                        "a": 1.0
+                    },
+                    "_name": "",
+                    "_peakPointLeftValue": 0.0,
+                    "_footPointLeftValue": 0.0,
+                    "_peakPointRightValue": 20.0,
+                    "_footPointRightValue": 80.0
+                },
+                {
+                    "_guid": "c31899a7-e518-4c45-870f-a9ed704ce269",
+                    "_color": {
+                        "r": 0.8761806488037109,
+                        "g": 0.0,
+                        "b": 1.0,
+                        "a": 1.0
+                    },
+                    "_name": "",
+                    "_peakPointLeftValue": 80.0,
+                    "_footPointLeftValue": 20.0,
+                    "_peakPointRightValue": 100.0,
+                    "_footPointRightValue": 100.0
+                }
+            ]
+        }
+    ],
+    "_defuzzitication": {
+        "_division": 10,
+        "_maxValue": 100,
+        "_guid": "5257b3c7-d3a8-479d-a11e-6fd141e9a0fb",
+        "_name": "",
+        "_value": 0.0,
+        "trapezoids": [
+            {
+                "_guid": "4990b4e7-d086-4b43-81b0-ced81693c110",
+                "_color": {
+                    "r": 1.0,
+                    "g": 0.0,
+                    "b": 0.0,
+                    "a": 1.0
+                },
+                "_name": "",
+                "_peakPointLeftValue": 0.0,
+                "_footPointLeftValue": -25.0,
+                "_peakPointRightValue": 0.0,
+                "_footPointRightValue": 25.0
+            },
+            {
+                "_guid": "ffaacbfa-4d3a-47d7-b976-db3ffce95f93",
+                "_color": {
+                    "r": 0.0,
+                    "g": 1.0,
+                    "b": 0.0,
+                    "a": 1.0
+                },
+                "_name": "",
+                "_peakPointLeftValue": 100.0,
+                "_footPointLeftValue": 75.0,
+                "_peakPointRightValue": 100.0,
+                "_footPointRightValue": 125.0
+            }
+        ],
+        "_subdivision": 40
+    },
+    "inferences": [
+        {
+            "_guid": "18d098d7-5df7-4817-bd64-31ecc6418d87",
+            "_name": "a",
+            "_leftSideInputGUID": "581ccd38-23cd-46c1-a260-3aeee8174418",
+            "_rightSideInputGUID": "030859b4-8c82-4f9d-901d-2f804b852531",
+            "_outputGUID": "4990b4e7-d086-4b43-81b0-ced81693c110",
+            "_op": 2
+        },
+        {
+            "_guid": "afc53f73-0866-4254-a523-14e8f98869bc",
+            "_name": "b",
+            "_leftSideInputGUID": "59b62df9-cece-43f4-8178-e8add09f6d27",
+            "_rightSideInputGUID": "581ccd38-23cd-46c1-a260-3aeee8174418",
+            "_outputGUID": "ffaacbfa-4d3a-47d7-b976-db3ffce95f93",
+            "_op": 4
+        },
+        {
+            "_guid": "030859b4-8c82-4f9d-901d-2f804b852531",
+            "_name": "c",
+            "_leftSideInputGUID": "7a504c3d-5913-4ea6-8129-4097fad19fa1",
+            "_rightSideInputGUID": "c31899a7-e518-4c45-870f-a9ed704ce269",
+            "_outputGUID": "030859b4-8c82-4f9d-901d-2f804b852531",
+            "_op": 2
+        }
+    ],
+    "_guid": "3eb9316f-65ab-40d0-b90a-24d2a11ecd8c",
+    "_name": ""
+}

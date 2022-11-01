@@ -33,6 +33,32 @@ namespace FuzzyLogicSystem.Editor
             }
         }
 
+        private string _popupMenuItemPath = null;
+        public string popupMenuItemPath
+        {
+            set
+            {
+                _popupMenuItemPath = value;
+            }
+            get
+            {
+                return _popupMenuItemPath;
+            }
+        }
+
+        private bool _isChanged = false;
+        public bool isChanged
+        {
+            set
+            {
+                _isChanged = value;
+            }
+            get
+            {
+                return _isChanged;
+            }
+        }
+
         private Vector2 scrollFuzzifications = Vector2.zero;
 
         private Vector2 scrollInferences = Vector2.zero;

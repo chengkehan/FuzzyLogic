@@ -267,7 +267,7 @@ namespace FuzzyLogicSystem.Editor
                         }
 
                         // Barycenter and new shape
-                        if (IsDefuzzification() && fuzzification.fuzzyLogic.updatingOutput)
+                        if (IsDefuzzification() && fuzzification.fuzzyLogic.evaluate)
                         {
                             // Barycenter
                             var defuzzification = fuzzification as Defuzzification;

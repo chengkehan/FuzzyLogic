@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System;
 
 namespace FuzzyLogicSystem
 {
@@ -290,6 +291,27 @@ namespace FuzzyLogicSystem
 
 		public void Sort(CompareFunc comparer)
 		{
+			Sort_Internal<object>(comparer, null);
+		}
+
+		// When sorting itself, meanwhile, apply the new order to secondaryList.
+		public void Sort<T2>(CompareFunc comparer, FlsList<T2> secondaryList)
+        {
+			Sort_Internal(comparer, secondaryList);
+        }
+
+		private void Sort_Internal<T2>(CompareFunc comparer, FlsList<T2> secondaryList)
+        {
+			if (comparer == null)
+			{
+				throw new ArgumentNullException("Null comparer is not allowed.");
+			}
+
+			if (secondaryList != null && secondaryList.size != size)
+            {
+				throw new Exception("secondaryList.size must be equal to this.size");
+			}
+
 			for (int i = 0; i < size - 1; i++)
 			{
 				bool changed = false;
@@ -297,9 +319,13 @@ namespace FuzzyLogicSystem
 				{
 					if (comparer(_buffer[j], _buffer[j + 1]) > 0)
 					{
-						T temp = _buffer[j];
-						_buffer[j] = _buffer[j + 1];
-						_buffer[j + 1] = temp;
+						Swap(this, j, j + 1);
+
+                        if (secondaryList != null)
+						{
+							Swap(secondaryList, j, j + 1);
+						}
+
 						changed = true;
 					}
 				}
@@ -308,6 +334,13 @@ namespace FuzzyLogicSystem
 					break;
 				}
 			}
+		}
+
+		private void Swap<T3>(FlsList<T3> list, int i, int j)
+        {
+			T3 temp = list[i];
+			list[i] = list[j];
+			list[j] = temp;
 		}
 	}
 }

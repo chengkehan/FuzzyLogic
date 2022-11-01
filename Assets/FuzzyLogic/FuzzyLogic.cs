@@ -9,6 +9,98 @@ namespace FuzzyLogicSystem
     [Serializable]
     public class FuzzyLogic
     {
+        #region Registered fuzzylogics
+
+        // Store all registered fuzzyLogics here.
+        private static List<FuzzyLogic> allRegisteredFuzzyLogics = new List<FuzzyLogic>();
+
+        public static int NumberRegisteredFuzzyLogics()
+        {
+            return allRegisteredFuzzyLogics.Count;
+        }
+
+        public static FuzzyLogic GetRegisteredFuzzyLogic(string guid)
+        {
+            foreach (var item in allRegisteredFuzzyLogics)
+            {
+                if (item.guid == guid)
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        public static FuzzyLogic GetRegisteredFuzzyLogic(int index)
+        {
+            if (index < 0 || index >= allRegisteredFuzzyLogics.Count)
+            {
+                return null;
+            }
+            else
+            {
+                return allRegisteredFuzzyLogics[index];
+            }
+        }
+
+        public static bool RegisterFuzzyLogic(FuzzyLogic fuzzyLogic)
+        {
+            if (fuzzyLogic == null)
+            {
+                return false;
+            }
+
+            if (QueryFuzzyLogic(fuzzyLogic.guid, out var _))
+            {
+                return false;
+            }
+
+            allRegisteredFuzzyLogics.Add(fuzzyLogic);
+            return true;
+        }
+
+        public static bool UnregisterFuzzyLogic(FuzzyLogic fuzzyLogic)
+        {
+            if (fuzzyLogic == null)
+            {
+                return false;
+            }
+
+            int index = allRegisteredFuzzyLogics.IndexOf(fuzzyLogic);
+            if (index == -1)
+            {
+                return false;
+            }
+            else
+            {
+                allRegisteredFuzzyLogics.RemoveAt(index);
+                return true;
+            }
+        }
+
+        public static void UnregisterAllFuzzyLogics()
+        {
+            allRegisteredFuzzyLogics.Clear();
+        }
+
+        public static bool QueryFuzzyLogic(string guid, out FuzzyLogic fuzzyLogic)
+        {
+            fuzzyLogic = null;
+            foreach (var item in allRegisteredFuzzyLogics)
+            {
+                if (item.guid == guid)
+                {
+                    fuzzyLogic = item;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        #endregion
+
+        #region Serialize and Deserialize
+
         private static byte[] _header = null;
         public static byte[] header
         {
@@ -59,7 +151,7 @@ namespace FuzzyLogicSystem
             }
         }
 
-        public static FuzzyLogic Deserialize(byte[] bytes)
+        public static FuzzyLogic Deserialize(byte[] bytes, FuzzyLogic overwriteFuzzyLogic)
         {
             if (bytes == null || bytes.Length < header.Length)
             {
@@ -75,11 +167,21 @@ namespace FuzzyLogicSystem
                 byte[] data = new byte[bytes.Length - header.Length];
                 Buffer.BlockCopy(bytes, header.Length, data, 0, data.Length);
                 string json = Encoding.Default.GetString(data);
-                var fuzzyLogic = JsonUtility.FromJson<FuzzyLogic>(json);
+                FuzzyLogic fuzzyLogic = overwriteFuzzyLogic;
+                if (overwriteFuzzyLogic == null)
+                {
+                    fuzzyLogic = JsonUtility.FromJson<FuzzyLogic>(json);
+                }
+                else
+                {
+                    JsonUtility.FromJsonOverwrite(json, overwriteFuzzyLogic);
+                }
                 fuzzyLogic.Initialize();
                 return fuzzyLogic;
             }
         }
+
+        #endregion
 
         // Editor only gui
         private IGUI _gui = null;
@@ -129,7 +231,7 @@ namespace FuzzyLogicSystem
         }
 
         private bool _updatingOutput = false;
-        public bool updatingOutput
+        public bool evaluate
         {
             set
             {
@@ -141,6 +243,38 @@ namespace FuzzyLogicSystem
             }
         }
 
+        [SerializeField]
+        private string _guid = null;
+        public string guid
+        {
+            set
+            {
+                _guid = value;
+            }
+            get
+            {
+                return _guid;
+            }
+        }
+
+        [SerializeField]
+        private string _name = null;
+        public string name
+        {
+            set
+            {
+                _name = value;
+            }
+            get
+            {
+                return _name;
+            }
+        }
+
+        public FuzzyLogic(string guid)
+        {
+            this.guid = guid;
+        }
 
         public void Initialize()
         {
@@ -174,7 +308,7 @@ namespace FuzzyLogicSystem
 
         public void Update()
         {
-            if (updatingOutput)
+            if (evaluate)
             {
                 for (int trapezoidI = 0; trapezoidI < defuzzification.NumberTrapezoids(); trapezoidI++)
                 {
@@ -185,10 +319,7 @@ namespace FuzzyLogicSystem
                         var inference = GetInference(inferenceI);
                         if (inference.outputGUID == trapezoid.guid)
                         {
-                            if (inference.IsCycleReference() == false)
-                            {
-                                trapezoid.height = inference.Output();
-                            }
+                            trapezoid.height = inference.Output();
                         }
                     }
                 }
@@ -201,6 +332,15 @@ namespace FuzzyLogicSystem
                     trapezoid.height = 1;
                 }
             }
+        }
+
+        public float Output()
+        {
+            var _evaluate = evaluate;
+            evaluate = true;
+            Update();
+            evaluate = _evaluate;
+            return defuzzification.OutputValue(out var _, out var _).x / defuzzification.maxValue;
         }
 
         public bool IsFuzzificationGUID(string guid)
