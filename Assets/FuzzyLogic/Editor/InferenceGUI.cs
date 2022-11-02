@@ -45,9 +45,9 @@ namespace FuzzyLogicSystem.Editor
         {
             EditorGUILayout.BeginHorizontal();
             {
-                EditorGUILayout.BeginVertical();
+                EditorGUILayout.BeginVertical(GUILayout.Width(100));
                 {
-                    GUIUtils.TextField(inference.fuzzyLogic, inference.name, t=>inference.name=t, GUILayout.Width(80));
+                    GUIUtils.TextField(inference.fuzzyLogic, inference.name, t=>inference.name=t);
 
                     if (GUILayout.Button("x", GUILayout.Width(20)))
                     {
@@ -190,6 +190,19 @@ namespace FuzzyLogicSystem.Editor
                 inputGuids.Add(fuzzification.guid);
             }
 
+            // registered fuzzyLogics
+            for (int fuzzeLogicI = 0; fuzzeLogicI < FuzzyLogic.NumberRegisteredFuzzyLogics(); fuzzeLogicI++)
+            {
+                var aFuzzyLogic = FuzzyLogic.GetRegisteredFuzzyLogic(fuzzeLogicI);
+                if (aFuzzyLogic != inference.fuzzyLogic)
+                {
+                    string popupMenuItemPath = GUIUtils.Get(aFuzzyLogic).popupMenuItemPath;
+                    string fuzzyLogicName = string.IsNullOrWhiteSpace(aFuzzyLogic.name) ? aFuzzyLogic.guid : aFuzzyLogic.name;
+                    inputLabels.Add("FuzzyLogics/" + (string.IsNullOrEmpty(popupMenuItemPath) ? fuzzyLogicName : popupMenuItemPath + "/" + fuzzyLogicName));
+                    inputGuids.Add(aFuzzyLogic.guid);
+                }
+            }
+
             // set inferences popup data
             // 1. set named data
             for (int inferenceI = 0; inferenceI < inference.fuzzyLogic.NumberInferences(); inferenceI++)
@@ -218,110 +231,105 @@ namespace FuzzyLogicSystem.Editor
                 }
             }
 
-            GUIUtils.BeginBox();
+            GUIUtils.BeginBox(GUILayout.Width(300));
             {
                 DrawCenterAlignedLabel("Input");
                 EditorGUILayout.BeginHorizontal();
                 {
-                    if (inference.fuzzyLogic.IsInferenceGUID(get_oneSideInputGUID()))
+                    string originalGUID = get_oneSideInputGUID();
+
+                    int selectedIndex = 0;
+                    if (inference.fuzzyLogic.IsFuzzificationTrapezoidGUID(originalGUID, out Fuzzification selectedFuzzification, out TrapezoidFuzzySet selectedTrapezoid))
                     {
-                        int selectedIndex = inputGuids.IndexOf(get_oneSideInputGUID());
-                        int newSelectedIndex = 0;
-                        GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>newSelectedIndex=o);
-                        set_oneSideInputGUID(inputGuids[newSelectedIndex]);
-                        // a fuzzification is selected
-                        if (inference.fuzzyLogic.IsFuzzificationGUID(get_oneSideInputGUID()))
+                        selectedIndex = inputGuids.IndexOf(selectedFuzzification.guid);
+                    }
+                    else
+                    {
+                        selectedIndex = inputGuids.IndexOf(originalGUID);
+                    }
+
+                    // oneSideInputGUID of a newly created inference is null,
+                    // selectedIndex will be -1, so clamp it.
+                    selectedIndex = Mathf.Max(selectedIndex, 0);
+
+                    int newSelectedIndex = 0;
+                    GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>newSelectedIndex=o);
+                    string newSelectedGUID = inputGuids[newSelectedIndex];
+
+                    if (inference.fuzzyLogic.IsFuzzificationGUID(newSelectedGUID))
+                    {
+                        selectedFuzzification = inference.fuzzyLogic.GetFuzzification(newSelectedGUID);
+                        selectedTrapezoid = selectedFuzzification.GetTrapezoid(originalGUID);
+                        if (selectedTrapezoid == null)
                         {
-                            set_oneSideInputGUID(inference.fuzzyLogic.GetFuzzification(get_oneSideInputGUID()).GetTrapezoid(0).guid);
+                            selectedTrapezoid = selectedFuzzification.GetTrapezoid(0);
                         }
-                        // an inference is selected
+
+                        inputGuids.Clear();
+                        inputLabels.Clear();
+
+                        for (int trapezoidI = 0; trapezoidI < selectedFuzzification.NumberTrapezoids(); trapezoidI++)
+                        {
+                            var trapezoid = selectedFuzzification.GetTrapezoid(trapezoidI);
+                            inputLabels.Add(string.IsNullOrWhiteSpace(trapezoid.name) ? ("Trapezoid" + trapezoidI) : trapezoid.name);
+                            inputGuids.Add(trapezoid.guid);
+                        }
+
+                        selectedIndex = inputGuids.IndexOf(selectedTrapezoid.guid);
+                        GUI.color = selectedTrapezoid.color;
+                        {
+                            GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o => selectedIndex = o);
+                        }
+                        GUI.color = Color.white;
+                        set_oneSideInputGUID(inputGuids[selectedIndex]);
+
+                        selectedFuzzification.TestIntersectionValuesOfBaseLineAndTrapozoids(out Vector2[] intersectionValues, out TrapezoidFuzzySet[] intersectionTrapezoids);
+                        int index = Array.IndexOf(intersectionTrapezoids, selectedTrapezoid);
+                        float outputValue = 0;
+                        if (index != -1)
+                        {
+                            outputValue = intersectionValues[index].y;
+                        }
+                        var outputStr = outputValue.ToString("f2");
+                        DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
+                        highlights.Get(inference).Draw(outputStr);
+                    }
+                    else if (inference.fuzzyLogic.IsInferenceGUID(newSelectedGUID))
+                    {
+                        set_oneSideInputGUID(newSelectedGUID);
+
+                        if (inference.IsCycleReference())
+                        {
+                            GUIUtils.Get(inference.fuzzyLogic).ShowNotification("Cycle reference is not allowed");
+                            set_oneSideInputGUID(originalGUID);
+                        }
                         else
                         {
-                            var oneSideInference = inference.fuzzyLogic.GetInference(get_oneSideInputGUID());
-                            if (inference.IsCycleReference() || oneSideInference.IsCycleReference())
-                            {
-                                GUIUtils.Get(inference.fuzzyLogic).ShowNotification("Cycle reference is not allowed");
-                                set_oneSideInputGUID(inputGuids[selectedIndex]);
-                            }
-                            else
-                            {
-                                var outputStr = oneSideInference.Output().ToString("f2");
-                                DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
-                                highlights.Get(inference).Draw(outputStr);
-                            }
+                            var newSelectedInference = inference.fuzzyLogic.GetInference(newSelectedGUID);
+                            var outputStr = newSelectedInference.Output().ToString("f2");
+                            DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
+                            highlights.Get(inference).Draw(outputStr);
                         }
                     }
-                    else if (inference.fuzzyLogic.IsFuzzificationTrapezoidGUID(get_oneSideInputGUID(), out Fuzzification o_fuzzification, out TrapezoidFuzzySet o_trapezoid))
+                    else if (FuzzyLogic.IsRegisteredFuzzyLogic(newSelectedGUID))
                     {
-                        /*
-                         ArgumentException is throw from GUILayout.
-                         Because unity will invoke OnGUI several times for different events in one frame.
-                         After layout of gui is calculated and cached, unity will repaint gui with cached data.
-                         And other codes are invoked as the same time.
-                         But when unity invoke OnGUI for repainting gui, condition was changed, our codes doesn't get to this point again.
-                         So unity rise an exception that cached layout data is not matching drawing gui.
-                         I cann't find an elegant way to solve this problem, so I choose to ignore this exception, because it will not cause any side effect.
-                         */
-                        try
+                        set_oneSideInputGUID(newSelectedGUID);
+
+                        if (FuzzyLogic.IsCycleReference(inference.fuzzyLogic))
                         {
-                            string oneSideGUID = get_oneSideInputGUID();
-                            int selectedIndex = inputGuids.IndexOf(o_fuzzification.guid);
-
-                            int newSelectedIndex = 0;
-                            GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>newSelectedIndex=o);
-                            o_fuzzification = inference.fuzzyLogic.GetFuzzification(inputGuids[newSelectedIndex]);
-                            // an inference is selected.
-                            if (o_fuzzification == null)
-                            {
-                                set_oneSideInputGUID(inputGuids[newSelectedIndex]);
-                                var oneSideInference = inference.fuzzyLogic.GetInference(inputGuids[newSelectedIndex]);
-                                if (inference.IsCycleReference() || oneSideInference.IsCycleReference())
-                                {
-                                    GUIUtils.Get(inference.fuzzyLogic).ShowNotification("Cycle reference is not allowed");
-                                    set_oneSideInputGUID(oneSideGUID);
-                                }
-                            }
-                            // a fuzzification is selected
-                            else
-                            {
-                                inputGuids.Clear();
-                                inputLabels.Clear();
-
-                                for (int trapezoidI = 0; trapezoidI < o_fuzzification.NumberTrapezoids(); trapezoidI++)
-                                {
-                                    var trapezoid = o_fuzzification.GetTrapezoid(trapezoidI);
-                                    inputLabels.Add(string.IsNullOrWhiteSpace(trapezoid.name) ? ("Trapezoid" + trapezoidI) : trapezoid.name);
-                                    inputGuids.Add(trapezoid.guid);
-                                }
-
-                                selectedIndex = Mathf.Max(inputGuids.IndexOf(get_oneSideInputGUID()), 0);
-                                GUI.color = o_trapezoid.color;
-                                {
-                                    GUIUtils.Popup(inference.fuzzyLogic, selectedIndex, inputLabels.ToArray(), o=>selectedIndex=o);
-                                }
-                                GUI.color = Color.white;
-                                set_oneSideInputGUID(inputGuids[selectedIndex]);
-
-                                o_fuzzification.TestIntersectionValuesOfBaseLineAndTrapozoids(out Vector2[] intersectionValues, out TrapezoidFuzzySet[] intersectionTrapezoids);
-                                int index = Array.IndexOf(intersectionTrapezoids, o_trapezoid);
-                                float outputValue = 0;
-                                if (index != -1)
-                                {
-                                    outputValue = intersectionValues[index].y;
-                                }
-                                var outputStr = outputValue.ToString("f2");
-                                DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
-                                highlights.Get(inference).Draw(outputStr);
-                            }
+                            GUIUtils.Get(inference.fuzzyLogic).ShowNotification("Cycle reference is not allowed");
+                            set_oneSideInputGUID(originalGUID);
                         }
-                        catch (ArgumentException)
+                        else
                         {
-                            // Do nothing
+                            var outputStr = FuzzyLogic.GetRegisteredFuzzyLogic(newSelectedGUID).Output().ToString("f2");
+                            DrawCenterAlignedLabel(outputStr, GUILayout.MaxWidth(80));
+                            highlights.Get(inference).Draw(outputStr);
                         }
                     }
                     else
                     {
-                        set_oneSideInputGUID(inference.fuzzyLogic.GetFuzzification(0).GetTrapezoid(0).guid);
+                        throw new Exception("Unexpected");
                     }
                 }
                 EditorGUILayout.EndHorizontal();

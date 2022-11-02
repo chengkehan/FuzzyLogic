@@ -204,16 +204,15 @@ namespace FuzzyLogicSystem
         // Calculate output of this inference
         public float Output()
         {
-            return Output_Internal(0);
+            return Output_Internal();
         }
 
-        private float Output_Internal(int depth)
+        private float Output_Internal()
         {
-            ++depth;
             if (op == OP.And)
             {
-                float leftSideOutput = LeftSideOutput(depth);
-                float rightSideOutput = RightSideOutput(depth);
+                float leftSideOutput = LeftSideOutput();
+                float rightSideOutput = RightSideOutput();
                 if (leftSideOutput < 0 || rightSideOutput < 0)
                 {
                     return -1;
@@ -225,8 +224,8 @@ namespace FuzzyLogicSystem
             }
             else if (op == OP.Or)
             {
-                float leftSideOutput = LeftSideOutput(depth);
-                float rightSideOutput = RightSideOutput(depth);
+                float leftSideOutput = LeftSideOutput();
+                float rightSideOutput = RightSideOutput();
                 if (leftSideOutput < 0 || rightSideOutput < 0)
                 {
                     return -1;
@@ -238,7 +237,7 @@ namespace FuzzyLogicSystem
             }
             else if (op == OP.Not)
             {
-                float leftSideOutput = LeftSideOutput(depth);
+                float leftSideOutput = LeftSideOutput();
                 if (leftSideOutput < 0)
                 {
                     return -1;
@@ -250,7 +249,7 @@ namespace FuzzyLogicSystem
             }
             else if (op == OP._I)
             {
-                float leftSideOutput = LeftSideOutput(depth);
+                float leftSideOutput = LeftSideOutput();
                 if (leftSideOutput < 0)
                 {
                     return -1;
@@ -266,29 +265,21 @@ namespace FuzzyLogicSystem
             }
         }
 
-        private float LeftSideOutput(int depth)
+        private float LeftSideOutput()
         {
-            return OneSideOutput(leftSideInputGUID, depth);
+            return OneSideOutput(leftSideInputGUID);
         }
 
-        private float RightSideOutput(int depth)
+        private float RightSideOutput()
         {
-            return OneSideOutput(rightSideInputGUID, depth);
+            return OneSideOutput(rightSideInputGUID);
         }
 
-        private float OneSideOutput(string guid, int depth)
+        private float OneSideOutput(string guid)
         {
             if (fuzzyLogic.IsInferenceGUID(guid))
             {
-                // If depth is too deep, assuming it's stackoverflow now, cycle reference is existed.
-                if (depth > 10)
-                {
-                    return -1;
-                }
-                else
-                {
-                    return fuzzyLogic.GetInference(guid).Output_Internal(depth);
-                }
+                return fuzzyLogic.GetInference(guid).Output_Internal();
             }
             else if (fuzzyLogic.IsFuzzificationTrapezoidGUID(guid, out Fuzzification fuzzification, out TrapezoidFuzzySet trapezoid))
             {
@@ -300,6 +291,10 @@ namespace FuzzyLogicSystem
                     value = intersectionValues[index].y;
                 }
                 return value;
+            }
+            else if(FuzzyLogic.IsRegisteredFuzzyLogic(guid))
+            {
+                return FuzzyLogic.GetRegisteredFuzzyLogic(guid).Output();
             }
             else
             {

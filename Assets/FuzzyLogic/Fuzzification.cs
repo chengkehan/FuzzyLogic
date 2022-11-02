@@ -223,6 +223,18 @@ namespace FuzzyLogicSystem
             return trapezoids[index];
         }
 
+        public TrapezoidFuzzySet GetTrapezoid(string guid)
+        {
+            for (int i = 0; i < NumberTrapezoids(); i++)
+            {
+                if (GetTrapezoid(i).guid == guid)
+                {
+                    return GetTrapezoid(i);
+                }
+            }
+            return null;
+        }
+
         public bool IsLeftShoulder(TrapezoidFuzzySet target)
         {
             int index = trapezoids.IndexOf(target);

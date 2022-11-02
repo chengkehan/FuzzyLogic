@@ -97,6 +97,64 @@ namespace FuzzyLogicSystem
             return false;
         }
 
+        public static bool IsRegisteredFuzzyLogic(string guid)
+        {
+            return QueryFuzzyLogic(guid, out var _);
+        }
+
+        public static bool IsCycleReference(FuzzyLogic fuzzyLogic)
+        {
+            return IsCycleReference_Internal(fuzzyLogic, fuzzyLogic.guid);
+        }
+
+        private static bool IsCycleReference_Internal(FuzzyLogic fuzzyLogic, string guid)
+        {
+            if (fuzzyLogic == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < fuzzyLogic.NumberInferences(); i++)
+            {
+                var inference = fuzzyLogic.GetInference(i);
+
+                if (IsRegisteredFuzzyLogic(inference.leftSideInputGUID))
+                {
+                    if (inference.leftSideInputGUID == guid)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        if (IsCycleReference_Internal(GetRegisteredFuzzyLogic(inference.leftSideInputGUID), guid))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                if (inference.op == Inference.OP.Or || inference.op == Inference.OP.And)
+                {
+                    if (IsRegisteredFuzzyLogic(inference.rightSideInputGUID))
+                    {
+                        if (inference.rightSideInputGUID == guid)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            if (IsCycleReference_Internal(GetRegisteredFuzzyLogic(inference.rightSideInputGUID), guid))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         #endregion
 
         #region Serialize and Deserialize
@@ -171,12 +229,13 @@ namespace FuzzyLogicSystem
                 if (overwriteFuzzyLogic == null)
                 {
                     fuzzyLogic = JsonUtility.FromJson<FuzzyLogic>(json);
+                    fuzzyLogic.Initialize();
                 }
                 else
                 {
                     JsonUtility.FromJsonOverwrite(json, overwriteFuzzyLogic);
+                    fuzzyLogic.Initialize_Internal();
                 }
-                fuzzyLogic.Initialize();
                 return fuzzyLogic;
             }
         }
@@ -284,6 +343,11 @@ namespace FuzzyLogicSystem
             }
             initialized = true;
 
+            Initialize_Internal();
+        }
+
+        private void Initialize_Internal()
+        {
             if (fuzzifications.Count == 0)
             {
                 AddFuzzification();

@@ -179,6 +179,12 @@ namespace FuzzyLogicSystem.Editor
                         }
                         GUILayout.EndHorizontal();
 
+                        GUILayout.Space(10);
+                        GUILayout.Label("|");
+                        GUILayout.Space(10);
+
+                        GUILayout.Label(new GUIContent(fuzzyLogic.guid, "GUID"));
+
                         GUILayout.FlexibleSpace();
                     }
                 }
@@ -198,7 +204,7 @@ namespace FuzzyLogicSystem.Editor
             ForEachFuzzyLogicsOnDisk((fuzzyLogic, filePath) =>
             {
                 // Register it
-                if (FuzzyLogic.QueryFuzzyLogic(fuzzyLogic.guid, out var _) == false)
+                if (FuzzyLogic.IsRegisteredFuzzyLogic(fuzzyLogic.guid) == false)
                 {
                     FuzzyLogic.RegisterFuzzyLogic(fuzzyLogic);
 
@@ -291,6 +297,8 @@ namespace FuzzyLogicSystem.Editor
                     }
                     FuzzyLogic.UnregisterAllFuzzyLogics();
                     RegisterAllFuzzyLogicsOnDisk();
+
+                    GUIUtils.Get(fuzzyLogic).ShowNotification("Reload Complete");
                 }
             }
             if (Event.current.type == EventType.Repaint)
@@ -311,15 +319,9 @@ namespace FuzzyLogicSystem.Editor
             for (int i = 0; i < FuzzyLogic.NumberRegisteredFuzzyLogics(); i++)
             {
                 var fuzzyLogic = FuzzyLogic.GetRegisteredFuzzyLogic(i);
-                if (string.IsNullOrWhiteSpace(fuzzyLogic.name) == false)
-                {
-                    string popupMenuItemPath = GUIUtils.Get(fuzzyLogic).popupMenuItemPath;
-                    allFuzzyLogicsNames.Add(string.IsNullOrEmpty(popupMenuItemPath) ? fuzzyLogic.name : popupMenuItemPath + "/" + fuzzyLogic.name);
-                }
-                else
-                {
-                    allFuzzyLogicsNames.Add("Unnamed/" + i);
-                }
+                string popupMenuItemPath = GUIUtils.Get(fuzzyLogic).popupMenuItemPath;
+                string fuzzyLogicName = string.IsNullOrWhiteSpace(fuzzyLogic.name) ? fuzzyLogic.guid : fuzzyLogic.name;
+                allFuzzyLogicsNames.Add(string.IsNullOrEmpty(popupMenuItemPath) ? fuzzyLogicName : popupMenuItemPath + "/" + fuzzyLogicName);
                 allFuzzyLogicsGUIDs.Add(fuzzyLogic.guid);
             }
 
