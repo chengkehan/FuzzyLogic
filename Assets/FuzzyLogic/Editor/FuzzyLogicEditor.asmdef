@@ -1,0 +1,18 @@
+{
+    "name": "FuzzyLogicEditor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:0ed8d62835b2845ff9e9e249c6d24155"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

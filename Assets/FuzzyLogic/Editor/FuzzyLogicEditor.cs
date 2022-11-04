@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -15,9 +14,9 @@ namespace FuzzyLogicSystem.Editor
 
         public const string DEFAULT = "default.bytes";
 
-        public const string DEFAULT_GUID = "defaultGUID";
+        public const string DEFAULT_GUID = "e464ddbf-d6f2-468c-a7d5-7e81a720865c";
 
-        [MenuItem("Window/Fuzzy Logic Editor")]
+        [MenuItem("Window/Fuzzy Logic/Editor")]
         private static void OpenFizzyLogicEditor()
         {
             var window = EditorWindow.CreateInstance<FuzzyLogicEditor>();
@@ -27,6 +26,44 @@ namespace FuzzyLogicSystem.Editor
             window.titleContent = title;
             window.Show();
         }
+
+        #region Generate new GUID
+
+        [MenuItem("Window/Fuzzy Logic/New GUID")]
+        private static void NewGUID()
+        {
+            var objs = Selection.objects;
+            foreach (var obj in objs)
+            {
+                if (obj is TextAsset && FuzzyLogic.ValidateHeader((obj as TextAsset).bytes))
+                {
+                    var assetPath = AssetDatabase.GetAssetPath(obj);
+                    var fuzzyLogic = FuzzyLogic.Deserialize((obj as TextAsset).bytes, null);
+                    fuzzyLogic.guid = Guid.NewGuid().ToString();
+                    var bytes = FuzzyLogic.Serialize(fuzzyLogic);
+                    File.WriteAllBytes(assetPath, bytes);
+                    AssetDatabase.ImportAsset(assetPath);
+
+                    Debug.Log("Set new guid successfully, " + assetPath);
+                }
+            }
+        }
+
+        [MenuItem("Window/Fuzzy Logic/New GUID", true)]
+        private static bool NewGUID_Validation()
+        {
+            var objs = Selection.objects;
+            foreach (var obj in objs)
+            {
+                if (obj is TextAsset && FuzzyLogic.ValidateHeader((obj as TextAsset).bytes))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        #endregion
 
         #region All FuzzyLogicEditor Windows
 
@@ -275,6 +312,7 @@ namespace FuzzyLogicSystem.Editor
                                     File.WriteAllBytes(filePath, FuzzyLogic.Serialize(fuzzyLogic));
                                     GUIUtils.Get(fuzzyLogic).isChanged = false;
                                     GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Empty();
+                                    AssetDatabase.ImportAsset(filePath);
                                     return false;
                                 }
                                 else
@@ -612,4 +650,3 @@ namespace FuzzyLogicSystem.Editor
         #endregion
     }
 }
-#endif

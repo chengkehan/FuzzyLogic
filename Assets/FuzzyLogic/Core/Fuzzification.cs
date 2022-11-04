@@ -61,6 +61,7 @@ namespace FuzzyLogicSystem
             set
             {
                 _maxValue = value;
+                ClampValue();
             }
         }
 
@@ -99,6 +100,7 @@ namespace FuzzyLogicSystem
             set
             {
                 _value = value;
+                ClampValue();
             }
             get
             {
@@ -215,6 +217,18 @@ namespace FuzzyLogicSystem
         public int NumberTrapezoids()
         {
             return trapezoids.Count;
+        }
+
+        public TrapezoidFuzzySet GetTrapezoidByName(string name)
+        {
+            for (int i = 0; i < NumberTrapezoids(); i++)
+            {
+                if (GetTrapezoid(i).name == name)
+                {
+                    return GetTrapezoid(i);
+                }
+            }
+            return null;
         }
 
         public TrapezoidFuzzySet GetTrapezoid(int index)
@@ -387,6 +401,11 @@ namespace FuzzyLogicSystem
             {
                 throw new IndexOutOfRangeException();
             }
+        }
+
+        private void ClampValue()
+        {
+            _value = Mathf.Clamp(value, 0, maxValue);
         }
     }
 }

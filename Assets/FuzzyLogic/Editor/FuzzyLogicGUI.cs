@@ -1,5 +1,4 @@
-﻿#if UNITY_EDITOR
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEditor;
 
@@ -20,6 +19,8 @@ namespace FuzzyLogicSystem.Editor
             }
         }
 
+        // Which editorWindow is drawing gui of this fuzzyLogic.
+        // If a fuzzyLogic is not opened in editorWindow, this property should be null.
         private FuzzyLogicEditor _editorWindow = null;
         public FuzzyLogicEditor editorWindow
         {
@@ -323,4 +324,3 @@ namespace FuzzyLogicSystem.Editor
         #endregion
     }
 }
-#endif

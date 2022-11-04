@@ -492,6 +492,18 @@ namespace FuzzyLogicSystem
             return inferences.Count;
         }
 
+        public Inference GetInferenceByName(string name)
+        {
+            for (int i = 0; i < NumberInferences(); i++)
+            {
+                if (GetInference(i).name == name)
+                {
+                    return GetInference(i);
+                }
+            }
+            return null;
+        }
+
         public Inference GetInference(int index)
         {
             CheckInitialized();
@@ -530,6 +542,18 @@ namespace FuzzyLogicSystem
         {
             CheckInitialized();
             return fuzzifications.Count;
+        }
+
+        public Fuzzification GetFuzzificationByName(string name)
+        {
+            for (int i = 0; i < NumberFuzzifications(); i++)
+            {
+                if (GetFuzzification(i).name == name)
+                {
+                    return GetFuzzification(i);
+                }
+            }
+            return null;
         }
 
         public Fuzzification GetFuzzification(int index)
