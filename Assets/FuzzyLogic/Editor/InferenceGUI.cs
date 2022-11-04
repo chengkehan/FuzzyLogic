@@ -9,6 +9,10 @@ namespace FuzzyLogicSystem.Editor
 {
     public class InferenceGUI : IGUI
     {
+        public const float FORCUS_ON_DEFAULT_WIDTH = 1000;
+
+        public const float FORCUS_ON_DEFAULT_HEIGHT = 200;
+
         private class Highlights
         {
             private Dictionary<Inference, HighlightGUI> _highlighes = new Dictionary<Inference, HighlightGUI>();

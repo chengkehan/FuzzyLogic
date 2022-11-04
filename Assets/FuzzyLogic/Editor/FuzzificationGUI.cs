@@ -10,7 +10,9 @@ namespace FuzzyLogicSystem.Editor
     {
         private Fuzzification fuzzification = null;
 
-        public const float AREA_HEIGHT = 400;
+        public const float MIN_GUI_HEIGHT = 400;
+
+        public const float MIN_GUI_WIDTH = 350;
 
         private FlsList<Vector2> positionList = new FlsList<Vector2>();
 
@@ -41,21 +43,26 @@ namespace FuzzyLogicSystem.Editor
 
         public void Draw()
         {
-            float areaWidth = 350;
-
-            if (IsDefuzzification())
+            float guiHeight = MIN_GUI_HEIGHT;
+            if (IsDefuzzification() == false)
             {
-                areaWidth *= 2;
+                guiHeight = GUIUtils.Get(fuzzification.fuzzyLogic).editorWindow.fuzzificationGUIHeight;
             }
 
-            float areaHeight = AREA_HEIGHT;
+            float guiWidth = MIN_GUI_WIDTH;
+            if (IsDefuzzification())
+            {
+                guiWidth = GUIUtils.Get(fuzzification.fuzzyLogic).editorWindow.defuzzificationGUIWidth;
+            }
+
+            float areaHeight = guiHeight;
             float glCanvasHeight = 230;
             Color coordinateColor = Color.gray;
             float axisArrowSize = 10;
             float axisDivisonSize = 5;
 
             float glCanvasMargin = 18;
-            Rect glDisplay = new Rect(0, 0, areaWidth, glCanvasHeight);
+            Rect glDisplay = new Rect(0, 0, guiWidth, glCanvasHeight);
             Vector2 originalPos = new Vector2(glCanvasMargin, glCanvasHeight - glCanvasMargin);
             Vector2 xAxisArrowPos = new Vector2(glDisplay.width - glCanvasMargin, originalPos.y);
             Vector2 yAxisArrowPos = new Vector2(originalPos.x, glCanvasMargin);
@@ -65,11 +72,11 @@ namespace FuzzyLogicSystem.Editor
             // frame area
             if (IsDefuzzification())
             {
-                GUILayout.BeginVertical(GUILayout.Width(areaWidth));
+                GUILayout.BeginVertical(GUILayout.Width(guiWidth));
             }
             else
             {
-                GUILayout.BeginVertical(GUILayout.Width(areaWidth), GUILayout.Height(areaHeight));
+                GUILayout.BeginVertical(GUILayout.Width(guiWidth), GUILayout.Height(areaHeight));
             }
             {
                 // gl canvas area
@@ -387,6 +394,11 @@ namespace FuzzyLogicSystem.Editor
                             GUIUtils.UndoStackRecord(fuzzification.fuzzyLogic);
                             fuzzification.fuzzyLogic.RemoveFuzzification(fuzzification);
                         }
+                        DrawFocusOnButton(new Rect(glDisplay.width - 40, 0, 20, 20));
+                    }
+                    else
+                    {
+                        DrawFocusOnButton(new Rect(glDisplay.width - 20, 0, 20, 20));
                     }
                 }
                 GUI.EndGroup();
@@ -547,6 +559,32 @@ namespace FuzzyLogicSystem.Editor
                 GUIUtils.EndBox();
             }
             GUILayout.EndVertical();
+        }
+
+        private void DrawFocusOnButton(Rect rect)
+        {
+            if (GUI.Button(rect, new GUIContent(EditorGUIUtility.FindTexture("d_ScaleTool On"), "Focus on this and Hide others")))
+            {
+                var focusedTargetGUID = GUIUtils.Get(fuzzification.fuzzyLogic).editorWindow.focusedTargetGUID;
+                if (focusedTargetGUID == null)
+                {
+                    focusedTargetGUID = fuzzification.guid;
+                }
+                else
+                {
+                    focusedTargetGUID = null;
+                }
+
+                float w = MIN_GUI_WIDTH;
+                float h = MIN_GUI_HEIGHT;
+                if (IsDefuzzification())
+                {
+                    w *= 2;
+                    h *= 1.3f;
+                }
+
+                GUIUtils.Get(fuzzification.fuzzyLogic).editorWindow.SetFocusedTargetGUID(focusedTargetGUID, w, h);
+            }
         }
     }
 }

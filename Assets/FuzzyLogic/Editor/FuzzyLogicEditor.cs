@@ -20,8 +20,11 @@ namespace FuzzyLogicSystem.Editor
         [MenuItem("Window/Fuzzy Logic Editor")]
         private static void OpenFizzyLogicEditor()
         {
-            var window = EditorWindow.GetWindow<FuzzyLogicEditor>();
-            window.titleContent = new GUIContent("Fuzzy Logic");
+            var window = EditorWindow.CreateInstance<FuzzyLogicEditor>();
+            var title = new GUIContent();
+            title.text = "Fuzzy Logic";
+            title.image = EditorGUIUtility.FindTexture("_Popup");
+            window.titleContent = title;
             window.Show();
         }
 
@@ -42,6 +45,136 @@ namespace FuzzyLogicSystem.Editor
         private static int NumberFuzzyLogicEditors()
         {
             return allFuzzyLogicEditors.Count;
+        }
+
+        private static FuzzyLogicEditor GetFuzzyLogicEditor(int index)
+        {
+            if (index < 0 || index >= allFuzzyLogicEditors.Count)
+            {
+                return null;
+            }
+            else
+            {
+                return allFuzzyLogicEditors[index];
+            }
+        }
+
+        private static void BringAllFuzzyLogicsToFront()
+        {
+            for (int i = 0; i < NumberFuzzyLogicEditors(); i++)
+            {
+                GetFuzzyLogicEditor(i).Focus();
+            }
+        }
+
+        #endregion
+
+        #region GUI Width and Height of Fuzzification and Defuzzification
+
+        // We store gui settings here rather than GUI classes so that user can edit one FuzzyLogic in multi-windows.
+
+        private float _fuzzificationGUIHeight = FuzzificationGUI.MIN_GUI_HEIGHT;
+        public float fuzzificationGUIHeight
+        {
+            set
+            {
+                _fuzzificationGUIHeight = value;
+            }
+            get
+            {
+                return _fuzzificationGUIHeight;
+            }
+        }
+
+        private float _defuzzificationGUIWidth = FuzzificationGUI.MIN_GUI_WIDTH * 2;
+        public float defuzzificationGUIWidth
+        {
+            set
+            {
+                _defuzzificationGUIWidth = value;
+            }
+            get
+            {
+                return _defuzzificationGUIWidth;
+            }
+        }
+
+        private Vector2 _scrollFuzzifications = Vector2.zero;
+        public Vector2 scrollFuzzifications
+        {
+            set
+            {
+                _scrollFuzzifications = value;
+            }
+            get
+            {
+                return _scrollFuzzifications;
+            }
+        }
+
+        private Vector2 _scrollInferences = Vector2.zero;
+        public Vector2 scrollInferences
+        {
+            set
+            {
+                _scrollInferences = value;
+            }
+            get
+            {
+                return _scrollInferences;
+            }
+        }
+
+        #endregion
+
+        #region focused window by target guid
+
+        // When set forcused target, we can resize window to fit size of gui, now we cache size of window at here.
+        // And restore size of window after remove focused target.
+        private Rect windowRectForRestoring;
+
+        // Set as guid of fuzzification or defuzzification,
+        // then corresponding gui will be drawed solo so that user can focus on this gui and not to be disturbed by others.
+        private string _focusedTargetGUID = null;
+        public string focusedTargetGUID
+        {
+            set
+            {
+                _focusedTargetGUID = value;
+                if (_focusedTargetGUID != null)
+                {
+                    windowRectForRestoring = position;
+                }
+                else
+                {
+                    // Don't restore size of window when it's docked,
+                    // otherwise it will break layout of docked windows.
+                    if (docked == false)
+                    {
+                        Rect winRect = position;
+                        winRect.width = windowRectForRestoring.width;
+                        winRect.height = windowRectForRestoring.height;
+                        position = winRect;
+                    }
+                }
+            }
+            get
+            {
+                return _focusedTargetGUID;
+            }
+        }
+
+        public void SetFocusedTargetGUID(string guid, float newWindowWidth, float newWindowHeight)
+        {
+            focusedTargetGUID = guid;
+
+            if (focusedTargetGUID != null)
+            {
+                Rect windowRect = GUIUtils.Get(fuzzyLogic).editorWindow.position;
+                windowRect.width = newWindowWidth;
+                windowRect.height = newWindowHeight;
+                GUIUtils.Get(fuzzyLogic).editorWindow.position = windowRect;
+            }
         }
 
         #endregion
@@ -105,13 +238,14 @@ namespace FuzzyLogicSystem.Editor
         }
 
         private void OnDisable()
-        {
+        { 
             DeleteTempShortcutsProfile();
             RemoveFuzzyLogicEditor(this);
 
             if (NumberFuzzyLogicEditors() == 0)
             {
                 FuzzyLogic.UnregisterAllFuzzyLogics();
+                DeleteTempShortcutsProfile();
             }
         }
 
@@ -119,78 +253,86 @@ namespace FuzzyLogicSystem.Editor
         {
             UndoRedo();
 
-            GUIUtils.BeginBox();
+            if (focusedTargetGUID == null)
             {
-                EditorGUILayout.BeginHorizontal();
+                GUIUtils.BeginBox();
                 {
-                    OnGUI_RefreshAllFuzzyLogics();
-                    OnGUI_AllFuzzyLogicsList();
-
-                    bool fuzzyLogicIsChanged = GUIUtils.Get(fuzzyLogic).isChanged;
-                    GUI.color = fuzzyLogicIsChanged ? Color.green : Color.white;
-                    bool saveButton = GUILayout.Button("Save" + (fuzzyLogicIsChanged ? "*" : string.Empty), GUILayout.Width(80));
-                    GUI.color = Color.white;
-                    if (saveButton)
+                    EditorGUILayout.BeginHorizontal();
                     {
-                        ForEachFuzzyLogicsOnDisk((i_fuzzyLogic, filePath) =>
+                        OnGUI_RefreshAllFuzzyLogics();
+                        OnGUI_AllFuzzyLogicsList();
+
+                        bool fuzzyLogicIsChanged = GUIUtils.Get(fuzzyLogic).isChanged;
+                        GUI.color = fuzzyLogicIsChanged ? Color.green : Color.white;
+                        bool saveButton = GUILayout.Button("Save" + (fuzzyLogicIsChanged ? "*" : string.Empty), GUILayout.Width(80));
+                        GUI.color = Color.white;
+                        if (saveButton)
                         {
-                            if (i_fuzzyLogic.guid == fuzzyLogic.guid)
+                            ForEachFuzzyLogicsOnDisk((i_fuzzyLogic, filePath) =>
                             {
-                                File.WriteAllBytes(filePath, FuzzyLogic.Serialize(fuzzyLogic));
-                                GUIUtils.Get(fuzzyLogic).isChanged = false;
-                                GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Empty();
-                                return false;
-                            }
-                            else
-                            {
-                                return true;
-                            }
-                        });
-                    }
-                    
-                    if (GUILayout.Button("Add Fuzzification", GUILayout.Width(120)))
-                    {
-                        GUIUtils.GUILoseFocus();
-                        GUIUtils.UndoStackRecord(fuzzyLogic);
-                        fuzzyLogic.AddFuzzification();
-                    }
-                    if (GUILayout.Button("Add Inference", GUILayout.Width(120)))
-                    {
-                        GUIUtils.GUILoseFocus();
-                        GUIUtils.UndoStackRecord(fuzzyLogic);
-                        fuzzyLogic.AddInference(); 
-                    }
-
-                    {
-                        GUILayout.Space(10);
-                        GUILayout.Label("|");
-                        GUILayout.Space(10);
-
-                        fuzzyLogic.evaluate = GUILayout.Toggle(fuzzyLogic.evaluate, "Evaluate");
-
-                        GUILayout.Space(10);
-                        GUILayout.Label("|");
-                        GUILayout.Space(10);
-
-                        GUILayout.BeginHorizontal(GUILayout.Width(150));
-                        {
-                            GUILayout.Label("Name");
-                            GUIUtils.TextField(fuzzyLogic, fuzzyLogic.name, o => fuzzyLogic.name = o);
+                                if (i_fuzzyLogic.guid == fuzzyLogic.guid)
+                                {
+                                    File.WriteAllBytes(filePath, FuzzyLogic.Serialize(fuzzyLogic));
+                                    GUIUtils.Get(fuzzyLogic).isChanged = false;
+                                    GUIUtils.Get(fuzzyLogic).editorWindow.undoStack.Empty();
+                                    return false;
+                                }
+                                else
+                                {
+                                    return true;
+                                }
+                            });
                         }
-                        GUILayout.EndHorizontal();
 
-                        GUILayout.Space(10);
-                        GUILayout.Label("|");
-                        GUILayout.Space(10);
+                        if (GUILayout.Button("Add Fuzzification", GUILayout.Width(120)))
+                        {
+                            GUIUtils.GUILoseFocus();
+                            GUIUtils.UndoStackRecord(fuzzyLogic);
+                            fuzzyLogic.AddFuzzification();
+                        }
+                        if (GUILayout.Button("Add Inference", GUILayout.Width(120)))
+                        {
+                            GUIUtils.GUILoseFocus();
+                            GUIUtils.UndoStackRecord(fuzzyLogic);
+                            fuzzyLogic.AddInference();
+                        }
 
-                        GUILayout.Label(new GUIContent(fuzzyLogic.guid, "GUID"));
+                        {
+                            GUILayout.Space(10);
+                            GUILayout.Label("|");
+                            GUILayout.Space(10);
 
-                        GUILayout.FlexibleSpace();
+                            fuzzyLogic.evaluate = GUILayout.Toggle(fuzzyLogic.evaluate, "Evaluate");
+
+                            GUILayout.Space(10);
+                            GUILayout.Label("|");
+                            GUILayout.Space(10);
+
+                            GUILayout.BeginHorizontal(GUILayout.Width(150));
+                            {
+                                GUILayout.Label("Name");
+                                GUIUtils.TextField(fuzzyLogic, fuzzyLogic.name, o => fuzzyLogic.name = o);
+                            }
+                            GUILayout.EndHorizontal();
+
+                            GUILayout.Space(10);
+                            GUILayout.Label("|");
+                            GUILayout.Space(10);
+
+                            GUILayout.Label(new GUIContent(fuzzyLogic.guid, "GUID"));
+
+                            GUILayout.FlexibleSpace();
+
+                            if (GUILayout.Button(new GUIContent("@" + NumberFuzzyLogicEditors(), "Bring All to Front.\nThis number indicates the number of opened FuzzyLogic Windows."), GUILayout.ExpandWidth(true)))
+                            {
+                                BringAllFuzzyLogicsToFront();
+                            }
+                        }
                     }
+                    EditorGUILayout.EndHorizontal();
                 }
-                EditorGUILayout.EndHorizontal();
+                GUIUtils.EndBox();
             }
-            GUIUtils.EndBox();
 
             GUIUtils.Get(fuzzyLogic).Draw();
 
