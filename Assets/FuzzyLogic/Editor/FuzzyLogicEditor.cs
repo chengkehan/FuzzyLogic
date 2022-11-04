@@ -168,7 +168,7 @@ namespace FuzzyLogicSystem.Editor
         {
             focusedTargetGUID = guid;
 
-            if (focusedTargetGUID != null)
+            if (focusedTargetGUID != null && docked == false)
             {
                 Rect windowRect = GUIUtils.Get(fuzzyLogic).editorWindow.position;
                 windowRect.width = newWindowWidth;
