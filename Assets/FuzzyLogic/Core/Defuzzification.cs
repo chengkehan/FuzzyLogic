@@ -164,6 +164,15 @@ namespace FuzzyLogicSystem
             }
         }
 
+        public override float value
+        {
+            set
+            {
+                _value = value;
+                // Don't clamp it in defuzzification
+            }
+        }
+
         public Defuzzification(string guid, FuzzyLogic fuzzyLogic) :
             base(guid, fuzzyLogic)
         {

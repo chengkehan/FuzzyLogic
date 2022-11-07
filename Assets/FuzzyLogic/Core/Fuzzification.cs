@@ -94,8 +94,8 @@ namespace FuzzyLogicSystem
         }
 
         [SerializeField]
-        private float _value = 0;
-        public float value
+        protected float _value = 0;
+        public virtual float value
         {
             set
             {
