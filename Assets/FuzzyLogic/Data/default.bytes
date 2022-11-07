@@ -76,7 +76,16 @@
         ],
         "_subdivision": 20
     },
-    "inferences": [],
+    "inferences": [
+        {
+            "_guid": "35ac76b0-8505-484b-818f-dca41e7bba87",
+            "_name": "",
+            "_leftSideInputGUID": "91c8a3e7-b0cb-48b9-a51a-16938cf7ddac",
+            "_rightSideInputGUID": "91c8a3e7-b0cb-48b9-a51a-16938cf7ddac",
+            "_outputGUID": "35ac76b0-8505-484b-818f-dca41e7bba87",
+            "_op": 1
+        }
+    ],
     "_guid": "e464ddbf-d6f2-468c-a7d5-7e81a720865c",
     "_name": "default"
 }

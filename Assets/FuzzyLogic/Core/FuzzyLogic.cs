@@ -348,13 +348,17 @@ namespace FuzzyLogicSystem
 
         private void Initialize_Internal()
         {
-            if (fuzzifications.Count == 0)
+            if (NumberFuzzifications() == 0)
             {
                 AddFuzzification();
             }
             if (defuzzification == null)
             {
                 defuzzification = new Defuzzification(Guid.NewGuid().ToString(), this);
+            }
+            if (NumberInferences() == 0)
+            {
+                AddInference();
             }
 
             foreach (var fuzzification in fuzzifications)

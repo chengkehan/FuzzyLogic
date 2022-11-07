@@ -22,7 +22,6 @@ public class FollowTarget : MonoBehaviour
     {
         fuzzyLogic.evaluate = true;
         fuzzyLogic.GetFuzzificationByName("distance").value = Vector3.Distance(target.position, source.position);
-        fuzzyLogic.Update();
 
         float speed = fuzzyLogic.Output() * fuzzyLogic.defuzzification.maxValue;
         source.position = Vector3.MoveTowards(source.position, target.position, speed * Time.deltaTime);
