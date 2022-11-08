@@ -13,6 +13,19 @@ namespace FuzzyLogicSystem.Editor
 
         public const float MIN_GUI_WIDTH = 350;
 
+        private float _scaleOfAxisX = 1.0f;
+        private float scaleOfAxisX
+        {
+            get
+            {
+                return _scaleOfAxisX;
+            }
+            set
+            {
+                _scaleOfAxisX = value;
+            }
+        }
+
         private FlsList<Vector2> positionList = new FlsList<Vector2>();
 
         public FuzzificationGUI(Fuzzification fuzzification)
@@ -67,6 +80,20 @@ namespace FuzzyLogicSystem.Editor
             Vector2 yAxisArrowPos = new Vector2(originalPos.x, glCanvasMargin);
             Vector2 xAxisMaxPos = xAxisArrowPos; xAxisMaxPos.x -= 20;
             Vector2 yAxisMaxPos = yAxisArrowPos; yAxisMaxPos.y += 20;
+
+            // Scale Coordinate
+            if (IsDefuzzification())
+            {
+                var defuzzification = fuzzification as Defuzzification;
+                float originalXOffset = ((xAxisMaxPos.x - originalPos.x) * (defuzzification.MinExtensionScale() * 0.75f)) * (1 - scaleOfAxisX);
+                originalPos.x += originalXOffset;
+                yAxisArrowPos.x += originalXOffset;
+                yAxisMaxPos.x += originalXOffset;
+
+                float xMaxPositionOffset = ((xAxisMaxPos.x - originalPos.x) * (defuzzification.MaxExtensionScale() * 0.75f)) * (1 - scaleOfAxisX);
+                xAxisArrowPos.x -= xMaxPositionOffset;
+                xAxisMaxPos.x -= xMaxPositionOffset;
+            }
 
             // frame area
             if (IsDefuzzification())
@@ -398,6 +425,12 @@ namespace FuzzyLogicSystem.Editor
                     else
                     {
                         DrawFocusOnButton(new Rect(glDisplay.width - 20, 0, 20, 20));
+                    }
+
+                    // Scale Coordinate
+                    if (IsDefuzzification())
+                    {
+                        scaleOfAxisX = GUI.VerticalScrollbar(new Rect(glDisplay.width - 16, 20, 20, 100), scaleOfAxisX, 0f, 1f, 0f);
                     }
                 }
                 GUI.EndGroup();
