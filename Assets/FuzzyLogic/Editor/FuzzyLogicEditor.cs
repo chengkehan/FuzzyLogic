@@ -38,8 +38,10 @@ namespace FuzzyLogicSystem.Editor
                 if (obj is TextAsset && FuzzyLogic.ValidateHeader((obj as TextAsset).bytes))
                 {
                     var assetPath = AssetDatabase.GetAssetPath(obj);
+                    var assetName = Path.GetFileNameWithoutExtension(assetPath);
                     var fuzzyLogic = FuzzyLogic.Deserialize((obj as TextAsset).bytes, null);
                     fuzzyLogic.guid = Guid.NewGuid().ToString();
+                    fuzzyLogic.name = assetName;
                     var bytes = FuzzyLogic.Serialize(fuzzyLogic);
                     File.WriteAllBytes(assetPath, bytes);
                     AssetDatabase.ImportAsset(assetPath);
