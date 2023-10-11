@@ -201,7 +201,7 @@ namespace FuzzyLogicSystem
             else
             {
                 string json = JsonUtility.ToJson(fuzzyLogic, true);
-                byte[] data = Encoding.Default.GetBytes(json);
+                byte[] data = Encoding.UTF8.GetBytes(json);
                 byte[] bytes = new byte[header.Length + data.Length];
                 Buffer.BlockCopy(header, 0, bytes, 0, header.Length);
                 Buffer.BlockCopy(data, 0, bytes, header.Length, data.Length);
@@ -224,7 +224,7 @@ namespace FuzzyLogicSystem
 
                 byte[] data = new byte[bytes.Length - header.Length];
                 Buffer.BlockCopy(bytes, header.Length, data, 0, data.Length);
-                string json = Encoding.Default.GetString(data);
+                string json = Encoding.UTF8.GetString(data);
                 FuzzyLogic fuzzyLogic = overwriteFuzzyLogic;
                 if (overwriteFuzzyLogic == null)
                 {
